@@ -1,2 +1,2 @@
-# notes
-My notes of study 
+# Notes
+My notes of study .
