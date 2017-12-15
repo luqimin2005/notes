@@ -1,0 +1,17 @@
+
+# Login to IPA WebUI, navigate to "SERVICE" and create new principals.
+
+# On Freeipa Server , Create keytab files for hbase regionserver on every host:
+[root@freeipa2-cs ~]# kadmin.local 
+Authenticating as principal admin/admin@ZUHU2.COM with password.
+kadmin.local:  xst -k /tmp/hbase.service.keytab2 -q hbase/worker02-cs.zuhu2.com@ZUHU2.COM
+
+# Copy the keytab files to the right host:
+[root@freeipa2-cs ~]# scp /tmp/hbase.service.keytab2 worker02-cs:/etc/security/keytabs/hbase.service.keytab
+root@worker02-cs's password: 
+hbase.service.keytab2                                                                  100%  498     0.5KB/s   00:00    
+
+# SSH into the right host , and change permission:
+chown hbase:hadoop /etc/security/keytabs/hbase.service.keytab
+chmod 440 /etc/security/keytabs/hbase.service.keytab
+
