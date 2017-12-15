@@ -46,11 +46,11 @@ nsslapd-changelogmaxentries: 5000
 
 ## Default 
 nsslapd-changelogcompactdb-interval			2592000 ( = 30 days)
-nsslapd-changelogdir						/var/lib/dirsrv/slapd-instance/changelogdb
+nsslapd-changelogdir					/var/lib/dirsrv/slapd-instance/changelogdb
 nsslapd-changelogmaxage						
 nsslapd-changelogmaxentries					
-nsslapd-changelogmaxconcurrentwrites		2
+nsslapd-changelogmaxconcurrentwrites			2
 nsslapd-changelogtrim-interval				300 ( = 5 minutes)
-nsslapd-encryptionalgorithm					None
-nsSymmetricKey								None
+nsslapd-encryptionalgorithm				None
+nsSymmetricKey						None
 
