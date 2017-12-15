@@ -1,0 +1,28 @@
+
+#!/bin/bash
+
+# Set KAFKA specific environment variables here.
+
+# The java implementation to use.
+export JAVA_HOME={{java64_home}}
+export PATH=$PATH:$JAVA_HOME/bin
+export PID_DIR={{kafka_pid_dir}}
+export LOG_DIR={{kafka_log_dir}}
+{% if security_enabled %}
+export KAFKA_KERBEROS_PARAMS="-Djavax.security.auth.useSubjectCredsOnly=false {{kafka_kerberos_params}}"
+{% else %}
+export KAFKA_KERBEROS_PARAMS={{kafka_kerberos_params}}
+{% endif %}
+# Add kafka sink to classpath and related depenencies
+if [ -e "/usr/lib/ambari-metrics-kafka-sink/ambari-metrics-kafka-sink.jar" ]; then
+  export CLASSPATH=$CLASSPATH:/usr/lib/ambari-metrics-kafka-sink/ambari-metrics-kafka-sink.jar
+  export CLASSPATH=$CLASSPATH:/usr/lib/ambari-metrics-kafka-sink/lib/*
+fi
+
+export KAFKA_HEAP_OPTS="-Xmx16g -Xms16g"
+export KAFKA_JVM_PERFORMANCE_OPTS="-XX:MetaspaceSize=96m -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35  -XX:G1HeapRegionSize=16M -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80"
+
+if [ -f /etc/kafka/conf/kafka-ranger-env.sh ]; then
+. /etc/kafka/conf/kafka-ranger-env.sh
+fi
+
