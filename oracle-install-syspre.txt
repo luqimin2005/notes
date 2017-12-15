@@ -1,0 +1,94 @@
+# 创建用户和组
+groupadd oinstall
+groupadd dba
+groupadd oper
+groupadd asmdba
+groupadd asmadmin
+groupadd asmoper
+useradd -g oinstall -G dba,oper,asmdba,asmadmin,asmoper oracle
+useradd -g oinstall -G dba,oper,asmdba,asmadmin,asmoper grid
+
+# 为用户oracle和grid设置密码
+passwd oracle
+passwd grid
+
+# 创建目录，并设置权限
+mkdir -p /u01/app/grid
+mkdir -p /u01/app/11.2.0/grid
+chown -R grid:oinstall /u01
+mkdir -p /u01/app/oracle
+chown -R oracle:oinstall /u01/app/oracle
+chmod -R 775 /u01
+
+# 配置裸设备
+cat /etc/udev/rules.d/60-raw.rules 
+ACTION=="add", KERNEL=="sdb", RUN+="/bin/raw /dev/raw/raw1 %N"
+ACTION=="add", KERNEL=="sdc", RUN+="/bin/raw /dev/raw/raw2 %N"
+ACTION=="add", KERNEL=="sdd", RUN+="/bin/raw /dev/raw/raw3 %N"
+KERNEL=="raw[1-3]", OWNER="grid", GROUP="oinstall", MODE="660"
+
+# 启动裸设备
+start_udev 
+Starting udev:                                             [  OK  ]
+
+# 检查裸设备
+ls /dev/raw/
+raw1  raw2  raw3  rawctl
+
+# 为oracle用户添加环境变量
+[oracle@server1 ~]$ vim .bash_profile 
+ORACLE_SID=sales; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/11.2.0/dbhome_1; export ORACLE_HOME
+ORACLE_PATH=.:$ORACLE_BASE/dba_scripts/common/sql:$ORACLE_HOME/rdbms/admin
+export ORACLE_PATH
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+ORA_NLS11=$ORACLE_HOME/nls/data; export ORA_NLS11
+PATH=.:${JAVA_HOME}/bin:${PATH}:$HOME/bin:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/sbin:/bin:/usr/bin/X11:/usr/local/bin
+PATH=${PATH}:/u01/app/common/oracle/bin
+PATH=/u01/app/oracle/dba_scripts/common/bin:$PATH
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+CLASSPATH=$ORACLE_HOME/JRE
+CLASSPATH=${CLASSPATH}:$ORACLE_HOME/jlib
+CLASSPATH=${CLASSPATH}:$ORACLE_HOME/rdbms/jlib
+CLASSPATH=${CLASSPATH}:$ORACLE_HOME/network/jlib
+export CLASSPATH
+export TEMP=/tmp
+export TMPDIR=/tmp
+umask 022
+
+# 为grid用户添加环境变量
+[grid@server1 ~]$ vim .bash_profile
+ORACLE_SID=+ASM; export ORACLE_SID
+ORACLE_BASE=/u01/app/grid; export ORACLE_BASE
+ORACLE_HOME=/u01/app/11.2.0/grid; export ORACLE_HOME
+ORACLE_PATH=/u01/app/oracle/common/oracle/sql; export ORACLE_PATH
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+ORA_NLS11=$ORACLE_HOME/nls/data; export ORA_NLS11
+PATH=.:${JAVA_HOME}/bin:${PATH}:$HOME/bin:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/bin/X11:/usr/local/bin
+PATH=${PATH}:/u01/app/common/oracle/bin:/usr/bin:/usr/sbin:/bin:/sbin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+CLASSPATH=$ORACLE_HOME/JRE
+CLASSPATH=${CLASSPATH}:$ORACLE_HOME/jlib
+CLASSPATH=${CLASSPATH}:$ORACLE_HOME/rdbms/jlib
+CLASSPATH=${CLASSPATH}:$ORACLE_HOME/network/jlib
+export CLASSPATH
+export TEMP=/tmp
+export TMPDIR=/tmp
+umask 022
+
+# 添加软链
+[root@server1 lib64]# ln -s libcap.so.2.16 libcap.so.1
+
