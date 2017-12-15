@@ -1,0 +1,418 @@
+
+//install ldap plugin for kerberos       
+yum install krb5-server-ldap.x86_64    
+
+****************************************add kdc, kadmin and kerberos container in LDAP*****************************************
+
+//edit add.ldif as follow
+
+dn: cn=users,dc=field,dc=hortonworks,dc=com
+changetype: add
+objectClass: organizationalRole
+ou: users
+
+dn: cn=groups,dc=field,dc=hortonworks,dc=com
+changetype: add
+objectClass: organizationalRole
+ou: groups
+
+dn: cn=kdc,dc=field,dc=hortonworks,dc=com
+changetype: add
+cn: kdc
+sn: kdc service
+objectclass: top
+objectclass: person
+userpassword: chenyang
+description: Kdc service
+
+dn: cn=kadmin,dc=field,dc=hortonworks,dc=com
+changetype: add
+cn: kadmin
+sn: kadmin_service
+objectclass: top
+objectclass: person
+userpassword: chenyang
+description: Kadmin service
+
+//add dn for kerberos container, kdc and kadmin
+
+ldapmodify -x -W -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -f add.ldif
+
+
+//option: delete entry
+vi del.ldif
+
+dn: cn=user,dc=field,dc=hortonworks,dc=com
+changetype: delete
+
+ldapmodify -x -W -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -f del.ldif
+
+//option: edit delete-user.ldif
+
+dn: cn=kdc,dc=field,dc=hortonworks,dc=com
+changetype: delete
+
+dn: cn=kadmin,dc=field,dc=hortonworks,dc=com
+changetype: delete
+
+dn: cn=users,dc=field,dc=hortonworks,dc=com
+changetype: delete
+
+ldapmodify -x -W -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -f delete-user.ldif
+
+***********************************************solving problem: there is no slap.conf due to update version of LDAP***********************
+
+//copy schema file
+cd /usr/share/doc/krb5-server-ldap-1.14.1
+scp kerberos* /etc/openldap/schema/
+
+//Now we're about at the guide's step 1, so in a directory somewhere, create a file with:
+
+include /etc/openldap/schema/kerberos.schema
+
+//Save it somewhere. I'm calling mine /temp/schema_convert.conf.
+
+//Make a directory to hold the results, e.g.,
+mkdir //temp/krb5_ldif
+
+//Run:
+[root@cheny3 temp]# slaptest -f /temp/schema_convert.conf -F /temp/krb5_ldif
+config file testing succeeded
+
+//This will output a bunch of stuff into /temp/krb5_ldif. Open /temp/krb5_ldif/cn=config/cn=schema/cn={0}kerberos.ldif in $EDITOR. As the guide suggests, replace:
+
+dn: cn={0}kerberos
+cn: {0}kerberos
+
+//with
+
+dn: cn=kerberos,cn=schema,cn=config
+cn: kerberos
+Look at the bottom of the file for something like:
+
+structuralObjectClass: olcSchemaConfig
+entryUUID: ...
+creatorsName: cn=config
+createTimestamp: ...
+entryCSN: ...
+modifiersName: cn=config
+modifyTimestamp: ...
+
+//and remove it.
+
+//Add it to the server:
+[root@cheny3 cn=schema]# ldapadd -Y EXTERNAL -H ldapi:/// -f  /temp/krb5_ldif/cn\=config/cn\=schema/cn\={0}kerberos.ldif
+SASL/EXTERNAL authentication started
+SASL username: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
+SASL SSF: 0
+adding new entry "cn=kerberos,cn=schema,cn=config"
+
+//stash password
+[root@cheny3 temp]# kdb5_ldap_util stashsrvpw -f /var/kerberos/krb5kdc/ldap.stash "cn=kdc,dc=field,dc=hortonworks,dc=com"
+Password for "cn=kdc,ou=users,dc=field,dc=hortonworks,dc=com": chenyang
+Re-enter password for "cn=kdc,ou=users,dc=field,dc=hortonworks,dc=com": chenyang
+
+[root@cheny3 temp]# kdb5_ldap_util stashsrvpw -f /var/kerberos/krb5kdc/ldap.stash "cn=kadmin,dc=field,dc=hortonworks,dc=com"
+Password for "cn=kadmin,ou=users,dc=field,dc=hortonworks,dc=com": chenyang
+Re-enter password for "cn=kadmin,ou=users,dc=field,dc=hortonworks,dc=com": chenyang
+
+*********************************************************redefine /etc/krb5.conf****************************************************************
+
+[libdefaults]
+  renew_lifetime = 7d
+  forwardable = true
+  default_realm = EXAMPLE.COM
+  ticket_lifetime = 24h
+  dns_lookup_realm = false
+  dns_lookup_kdc = false
+  default_ccache_name = /tmp/krb5cc_%{uid}
+  #default_tgs_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
+  #default_tkt_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
+
+[realms]
+  EXAMPLE.COM = {
+    admin_server = cheny3.field.hortonworks.com
+    kdc = cheny3.field.hortonworks.com
+    default_domain = field.hortonworks.com
+  }
+  
+[domain_realm]
+    .field.hortonworks.com = EXAMPLE.COM
+    field.hortonworks.com = EXAMPLE.COM
+ 
+*********************************************************redefine /var/kerberos/krb5kdc/kdc.conf****************************************************************
+
+[kdcdefaults]
+ kdc_ports = 88
+ kdc_tcp_ports = 88
+
+[realms]
+ EXAMPLE.COM = {
+  #master_key_type = aes256-cts
+  acl_file = /var/kerberos/krb5kdc/kadm5.acl
+  dict_file = /usr/share/dict/words
+  admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+  supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal camellia256-cts:normal camellia128-cts:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
+  database_module = LDAP
+ }
+    
+[dbmodules]
+  LDAP = {
+    db_library = kldap
+    db_module_dir = /usr/lib64/krb5/plugins/kdb/
+    ldap_kerberos_container_dn = "cn=krbcontainer,dc=field,dc=hortonworks,dc=com"
+    ldap_kdc_dn = "cn=kdc,dc=field,dc=hortonworks,dc=com"
+    ldap_kadmind_dn = "cn=kadmin,dc=field,dc=hortonworks,dc=com"
+    ldap_service_password_file = /var/kerberos/krb5kdc/ldap.stash
+    ldap_servers = ldap://cheny3.field.hortonworks.com
+    ldap_conns_per_server = 5
+  }
+
+[logging]
+  default = FILE:/var/log/krb5kdc.log
+  admin_server = FILE:/var/log/kadmind.log
+  kdc = FILE:/var/log/krb5kdc.log
+
+**********************************************************build database**************************************************************************
+  //start kdc and kadmin
+systemctl start krb5kdc
+systemctl start kadmin
+
+//option to destroy previous
+kdb5_ldap_util -D cn=ldapadm,dc=field,dc=hortonworks,dc=com -H ldap://  destroy  -r EXAMPLE.COM
+
+//build database
+kdb5_ldap_util -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -P chenyang create -r EXAMPLE.COM -s
+Password for "cn=ldapadm,dc=field,dc=hortonworks,dc=com": chenyang
+Initializing database for realm 'EXMAPLE.COM'
+
+//recreate master key for kdc database
+[root@cheny3 temp]# kdb5_util stash
+Using existing stashed keys to update stash file.
+
+*********************************************************acl for kdc and kadmin in LDAP********************************************************
+
+//whenever there prompt insufficient access right during command kadmin.local, it's related to the correction setting as following
+
+//edit acls.ldif
+cd /temp
+vi acls.ldif 
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+delete: olcAccess
+olcAccess: {6}
+-
+add: olcAccess
+olcAccess: {6}to *
+    by self write
+    by * none
+-
+delete: olcAccess
+olcAccess: {5}
+-
+add:  olcAccess
+olcAccess: {5}to attrs=userPassword,userPKCS12
+    by self write
+    by dn.exact="cn=ldapadm,dc=field,dc=hortonworks,dc=com" write
+  	by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" read
+  	by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" read
+  	by dn.base="cn=users,dc=field,dc=hortonworks,dc=com" read
+    by anonymous auth
+    by * none
+-
+delete: olcAccess
+olcAccess: {4}
+-
+add: olcAccess
+olcAccess: {4}to dn.base="cn=Subschema"
+    by * read
+-
+delete: olcAccess
+olcAccess: {3}
+-
+add: olcAccess
+olcAccess: {3}to dn.base=""
+    by * read
+-
+delete: olcAccess
+olcAccess: {2}
+-
+add: olcAccess
+# Providing access to principals, if not underneath realm container
+olcAccess: {2}to dn.subtree="cn=groups,dc=field,dc=hortonworks,dc=com"
+  by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" write
+  by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" write
+  by dn.base="cn=users,dc=field,dc=hortonworks,dc=com" write
+  by * read
+-
+delete: olcAccess
+olcAccess: {1}
+-
+add: olcAccess
+# Providing access to principals, if not underneath realm container
+olcAccess: {1}to dn.subtree="cn=users,dc=field,dc=hortonworks,dc=com"
+  by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" write
+  by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" write
+  by dn.base="cn=users,dc=field,dc=hortonworks,dc=com" write
+  by * read
+-
+delete: olcAccess
+olcAccess: {0}
+-
+add: olcAccess
+# Providing access to realm container
+olcAccess: {0}to dn.subtree="cn=EXAMPLE.COM,cn=krbcontainer,dc=field,dc=hortonworks,dc=com"
+  by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" write 
+  by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" write 
+  by * none
+
+
+//update
+ldapmodify -Y EXTERNAL -H ldapi:/// -f acls.ldif 
+
+
+**********************************************************appendix: Access Control Ordering**************************************************************************
+
+Since the ordering of olcAccess directives is essential to their proper evaluation, but LDAP attributes normally do not preserve the ordering of their values, OpenLDAP uses a custom schema extension to maintain a fixed ordering of these values. This ordering is maintained by prepending a "{X}" numeric index to each value, similarly to the approach used for ordering the configuration entries. These index tags are maintained automatically by slapd and do not need to be specified when originally defining the values. For example, when you create the settings
+
+    olcAccess: to attrs=member,entry
+         by dnattr=member selfwrite
+    olcAccess: to dn.children="dc=example,dc=com"
+         by * search
+    olcAccess: to dn.children="dc=com"
+         by * read
+when you read them back using slapcat or ldapsearch they will contain
+
+    olcAccess: {0}to attrs=member,entry
+         by dnattr=member selfwrite
+    olcAccess: {1}to dn.children="dc=example,dc=com"
+         by * search
+    olcAccess: {2}to dn.children="dc=com"
+         by * read
+The numeric index may be used to specify a particular value to change when using ldapmodify to edit the access rules. This index can be used instead of (or in addition to) the actual access value. Using this numeric index is very helpful when multiple access rules are being managed.
+
+For example, if we needed to change the second rule above to grant write access instead of search, we could try this LDIF:
+
+    changetype: modify
+    delete: olcAccess
+    olcAccess: to dn.children="dc=example,dc=com" by * search
+    -
+    add: olcAccess
+    olcAccess: to dn.children="dc=example,dc=com" by * write
+    -
+But this example will not guarantee that the existing values remain in their original order, so it will most likely yield a broken security configuration. Instead, the numeric index should be used:
+
+    changetype: modify
+    delete: olcAccess
+    olcAccess: {1}
+    -
+    add: olcAccess
+    olcAccess: {1}to dn.children="dc=example,dc=com" by * write
+    -
+This example deletes whatever rule is in value #1 of the olcAccess attribute (regardless of its value) and adds a new value that is explicitly inserted as value #1. The result will be
+
+    olcAccess: {0}to attrs=member,entry
+         by dnattr=member selfwrite
+    olcAccess: {1}to dn.children="dc=example,dc=com"
+         by * write
+    olcAccess: {2}to dn.children="dc=com"
+         by * read
+which is exactly what was intended.
+
+**********************************************************appendix: useful commmand**************************************************************************
+
+kdb5_util create -r EXAMPLE.COM -s
+
+
+kdb5_ldap_util -D "cn=kadmin_service,ou=profile,dc=field,dc=hortonworks,dc=com" stashsrvpw -f /var/kerberos/krb5kdc/ldap.stash "cn=kdc,dc=field,dc=hortonworks,dc=com"
+
+kdb5_ldap_util -D "cn=kadmin_service,ou=profile,dc=field,dc=hortonworks,dc=com" stashsrvpw -f /var/kerberos/krb5kdc/ldap.stash "cn=kadmin,dc=field,dc=hortonworks,dc=com"
+
+kdb5_ldap_util -D "cn=kadmin_service,ou=profile,dc=field,dc=hortonworks,dc=com" -P kadmin_service create -r EXMAPLE.COM -s
+
+kdb5_ldap_util -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -w chenyang create -r EXMAPLE.COM -s
+
+kdb5_ldap_util -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -w chenyang destroy -r EXMAPLE.COM
+
+ldapsearch -h cheny2.field.hortonworks.com -x -D "cn=ldapadm,dc=field,dc=hortonworks,dc=com" -b "dc=field,dc=hortonworks,dc=com" -W
+
+ldapsearch -h cheny2.field.hortonworks.com -x -D "cn=kdc,dc=field,dc=hortonworks,dc=com" -b "dc=field,dc=hortonworks,dc=com" -W
+
+TLS_CACERT /etc/openldap/certs/cacert.pem
+
+
+ldappasswd -H ldap://cheny2.field.hortonworks.com -x -D "cn=kdc,dc=field,dc=hortonworks,dc=com" -W -A -S
+
+ldapsearch -h cheny2.field.hortonworks.com -x -D "cn=kadmin,dc=field,dc=hortonworks,dc=com" -b "cn=EXAMPLE.COM,cn=krbcontainer,dc=field,dc=hortonworks,dc=com" -W 
+
+curl -i http://cheny0.field.hortonworks.com:50070/webhdfs/v1/user/root?op=LISTSTATUS
+
+//after kerberized, before to carry on you first login in right account
+kinit -k -t /etc/security/keytabs/dn.service.keytab dn/cheny3.field.hortonworks.com@EXAMPLE.COM
+kinit -k -t /etc/security/keytabs/hdfs.headless.keytab hdfs-cheny@EXAMPLE.COM
+kinit -k -t /etc/security/keytabs/smokeuser.headless.keytab ambari-qa-cheny@EXAMPLE.COM
+kinit -k -t /etc/security/keytabs/oozie.service.keytab oozie/cheny2.field.hortonworks.com@EXAMPLE.COM
+
+curl -X GET http://cheny2.field.hortonworks.com:8088/ws/v1/cluster/metrics
+
+
+***********************************note: acls settings for ldap authentication of ranger, hiveserver2 and ambari**************************************************************************
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcAccess
+# Providing access to realm container
+olcAccess: {0}to dn.subtree="cn=EXAMPLE.COM,cn=krbcontainer,dc=field,dc=hortonworks,dc=com"
+  by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" write 
+  by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" write 
+  by * none
+-
+add: olcAccess
+olcAccess: {1}to dn.base=""
+    by * read
+-
+add: olcAccess
+olcAccess: {2}to dn.base="cn=Subschema"
+    by * read
+-
+add:  olcAccess
+olcAccess: {3}to attrs=userPassword,userPKCS12
+    by self write
+    by dn.exact="cn=ldapadm,dc=field,dc=hortonworks,dc=com" write
+    by anonymous auth
+    by * none
+-
+add: olcAccess
+# Providing access to principals, if not underneath realm container
+olcAccess: {4}to dn.subtree="cn=users,dc=field,dc=hortonworks,dc=com"
+  by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" write
+  by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" write
+  by dn.base="cn=users,dc=field,dc=hortonworks,dc=com" write
+  by * read
+-
+add: olcAccess
+# Providing access to principals, if not underneath realm container
+olcAccess: {5}to dn.subtree="cn=groups,dc=field,dc=hortonworks,dc=com"
+  by dn.exact="cn=kdc,dc=field,dc=hortonworks,dc=com" write
+  by dn.exact="cn=kadmin,dc=field,dc=hortonworks,dc=com" write
+  by dn.base="cn=users,dc=field,dc=hortonworks,dc=com" write
+  by * read
+
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+delete: olcAccess
+olcAccess: {5}
+-
+delete: olcAccess
+olcAccess: {4}
+-
+delete: olcAccess
+olcAccess: {2}
+-
+delete: olcAccess
+olcAccess: {1}
+-
+delete: olcAccess
+olcAccess: {0}

@@ -1,0 +1,56 @@
+[root@freeipa2-ys slapd-ZUHU3-COM]# ldapmodify  -D "cn=directory manager" -W
+Enter LDAP Password: 
+dn: cn=config
+replace: nsslapd-errorlog-level
+nsslapd-errorlog-level: 8192               
+## Default => 16384
+
+
+ldapsearch -o ldif-wrap=no -x -D "cn=directory manager" -W  -b "cn=config" "objectclass=nsds5replica" nsds50ruv
+
+ldapsearch -D "cn=directory manager" -W -b "cn=changelog5,cn=config"  > /tmp/changelog5
+
+ldapmodify -D "cn=directory manager" -W -x -h freeipa1-ys.zuhu3.com -v -a
+
+dn: cn=changelog5,cn=config
+changetype: modify
+
+replace: nsslapd-changelogmaxage
+nsslapd-changelogmaxage: 7d
+
+add: nsslapd-changelogmaxage
+nsslapd-changelogmaxage: 7d
+
+add: nsslapd-changelogmaxentries
+nsslapd-changelogmaxentries: 5000
+
+add: nsslapd-changelogtrim-interval
+nsslapd-changelogtrim-interval: 300
+
+add: nsslapd-changelogcompactdb-interval
+nsslapd-changelogcompactdb-interval: 1296000
+
+ldapsearch -x -D 'cn=Directory Manager' -W -b "cn=changelog5,cn=config" \
+     nsslapd-changelogdir \
+     nsslapd-changelogmaxage \
+	 nsslapd-changelogmaxentries \
+	 nsslapd-changelogtrim-interval \
+	 nsslapd-changelogcompactdb-interval 
+
+dn: cn=changelog5,cn=config
+nsslapd-changelogmaxage: 7d
+nsslapd-changelogcompactdb-interval: 1296000
+nsslapd-changelogtrim-interval: 300
+nsslapd-changelogmaxentries: 5000
+
+
+## Default 
+nsslapd-changelogcompactdb-interval			2592000 ( = 30 days)
+nsslapd-changelogdir						/var/lib/dirsrv/slapd-instance/changelogdb
+nsslapd-changelogmaxage						
+nsslapd-changelogmaxentries					
+nsslapd-changelogmaxconcurrentwrites		2
+nsslapd-changelogtrim-interval				300 ( = 5 minutes)
+nsslapd-encryptionalgorithm					None
+nsSymmetricKey								None
+
