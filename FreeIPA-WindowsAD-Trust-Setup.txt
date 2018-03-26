@@ -1,0 +1,101 @@
+Active Directory Trust Setup
+
+# FreeIPA 3.3.3 or later is recommended, Windows Server 2008 R2 or later with configured DC and DNS.
+# IPv6 stack usage. Enable IPv6 stack at the kernel level, but disable IPv6 address to a network interface.
+# Example configuration for /etc/sysctl.d/ipv6.conf
+# Disable IPv6:
+	net.ipv6.conf.all.disable_ipv6 = 1
+	net.ipv6.conf.<interface0>.disable_ipv6 = 1
+
+**********
+IPA server IP address: 	ipa_ip_address (e.g. 10.16.78.61)
+IPA server hostname: 	ipa_hostname (e.g. ipaserver.ipadomain.example.com)
+IPA domain: 			ipa_domain (e.g. ipadomain.example.com)
+IPA NetBIOS: 			ipa_netbios (e.g. IPADOMAIN)
+IPA Kerberos realm, IPA_DOMAIN, is equal to IPA domain (e.g. IPADOMAIN.EXAMPLE.COM and ipadomain.example.com)
+AD DC IP address: 		ad_ip_address (e.g. 10.16.79.150)
+AD DC hostname: 		ad_hostname (e.g. adserver)
+AD domain: 				ad_domain (e.g. addomain.example.com)
+AD NetBIOS: 			ad_netbios (e.g. ADDOMAIN)
+AD admins group SID: 	ad_admins_sid (e.g. S-1-5-21-16904141-148189700-2149043814-512)
+**********
+
+	C:\> dnscmd 127.0.0.1 /ZoneAdd ipadomain.example.com /Forwarder 10.16.78.61
+
+# Install and configure IPA server
+	yum update -y
+	yum install -y *ipa-server ipa-server-trust-ad bind bind-dyndb-ldap
+	hostnamectl set-hostname ipa_hostname
+	ipa-server-install -a mypassword1 -p mypassword2 --domain=ipa_domain --realm=IPA_DOMAIN --setup-dns --no-forwarders -U
+# After IPA service is running normally, configure for cross-forest trusts.
+	ipa-adtrust-install --netbios-name=ipa_netbios -a mypassword1
+ 
+# Checklist:
+# Date/Time.
+# Firewall.
+	TCP ports: 80, 88, 443, 389, 636, 88, 464, 53, 135, 138, 139, 445, 1024-1300
+	UDP ports: 88, 464, 53, 123, 138, 139, 389, 445
+# DNS forwarders.
+	C:\> dnscmd 127.0.0.1 /ZoneAdd ipa_domain /Forwarder ipa_ip_address
+	ipa dnsforwardzone-add ad_domain --forwarder=ad_ip_address --forward-policy=only
+# 1) AD is subdomain of IPA.
+# 1-1) On IPA server, add A record and NS record for the AD domain.
+	ipa dnsrecord-add ipa_domain ad_hostname.ad_netbios --a-ip-address=ad_ip_address
+	ipa dnsrecord-add ipa_domain ad_netbios --ns-hostname=ad_hostname.ad_netbios
+# 1-2) On AD DC, there's two options:
+# 1-2-1) Configure a global forwarder to forward DNS queries to the IPA domain.
+	C:\> dnscmd 127.0.0.1 /ResetForwarders ipa_ip_address /Slave
+# 1-2-2) Configure a DNS zone for master-slave replication, periodically copy.
+	ipa dnszone-mod ipa_domain --allow-transfer=ad_ip_address
+	C:\> dnscmd 127 0.0.1 /ZoneAdd ipa_domain /Secondary ipa_ip_address
+# 2) IPA is subdomain of AD.
+# On AD DC, add A record and NS record for the IPA domain.
+	C:\> dnscmd 127.0.0.1 /RecordAdd ad_domain ipa_hostname.ipa_domain A ipa_ip_address
+	C:\> dnscmd 127.0.0.1 /RecordAdd ad_domain ipa_domain NS ipa_hostname.ipa_domain
+# DNS configuration verify.
+# 1) On AD DC	
+	C:\> nslookup
+	> set type=srv
+	> _ldap._tcp.ad_domain
+	> _ldap._tcp.ipa_domain
+	> quit
+# 2) On IPA server
+	dig SRV _ldap._tcp.ipa_domain
+	dig SRV _ldap._tcp.ad_domain
+
+# Config cross-forest trust
+	ipa trust-add --type=ad ad_domain --admin Administrator --password
+# Once trust leg on AD side is established, one needs to retrieve the list of trusted forest domains from AD side.
+	ipa trust-fetch-domains "ad_domain"
+# Get list of the trusted domains from a trusted forest.
+	ipa trustdomain-find "ad_domain"
+
+# Config /etc/krb5.conf
+	[realms]
+	IPA_DOMAIN = {
+	....
+	auth_to_local = RULE:[1:$1@$0](^.*@AD_DOMAIN$)s/@AD_DOMAIN/@ad_domain/
+	auth_to_local = DEFAULT
+	}
+# Restart krb5kdc and sssd.
+	service krb5kdc restart
+	service sssd restart
+
+# Config AD groups mapping to the IPA groups.
+# 1) Add users and groups from trusted domain to an external group in IPA. External group serves as a container to reference trusted domain users and groups by their security identifiers.
+# 2) Map external group to an existing POSIX group in IPA. This POSIX group will be assigned proper group id (gid) that will be used as default group for all incoming trusted domain users mapped to this group.
+	ipa group-add --desc='ad_domain admins external map' ad_admins_external --external
+	ipa group-add --desc='ad_domain admins' ad_admins
+	ipa group-add-member ad_admins_external --external 'ad_netbios\Domain Admins'
+	ipa group-add-member ad_admins --groups ad_admins_external
+	
+
+
+
+
+
+
+
+
+
+
