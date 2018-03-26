@@ -1,5 +1,7 @@
 Active Directory Trust Setup
 
+https://www.freeipa.org/page/Active_Directory_trust_setup
+
 # FreeIPA 3.3.3 or later is recommended, Windows Server 2008 R2 or later with configured DC and DNS.
 # IPv6 stack usage. Enable IPv6 stack at the kernel level, but disable IPv6 address to a network interface.
 # Example configuration for /etc/sysctl.d/ipv6.conf
