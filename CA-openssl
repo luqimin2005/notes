@@ -1,0 +1,56 @@
+测试环境：
+CA
+centos
+192.168.207.128
+HTTP
+centos2
+192.168.207.129
+
+CA配置
+[root@centos ~]# cd /etc/pki/CA/  
+[root@centos CA]# touch index.txt
+[root@centos CA]# echo 1000 > serial
+[root@centos CA]# openssl genrsa -aes256 -out private/ca.key 4096
+// 生成ca私钥
+[root@centos CA]# chmod 400 private/ca.key
+[root@centos CA]# openssl req -key private/ca.key -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs/ca.crt
+// 生成ca自签名证书
+[root@centos CA]# openssl x509 -noout -text -in certs/ca.crt
+// 验证ca证书
+
+在CA上为Http服务准备证书
+[root@centos CA]# openssl genrsa -out http.key 2048
+// 生成私钥
+[root@centos CA]# openssl req -new -sha256 -key http.key -out http.csr
+// 生成证书请求文件
+[root@centos CA]# openssl x509 -req -CA ca.crt -CAkey ca.key -CAcreateserial -days 3650 -md sha256 -in http.csr -out http.crt
+// 使用ca签名证书
+[root@centos CA]# openssl ca -cert ca.crt -keyfile ca.key -extensions server_crt -days 365 -notext -md sha256 -in centos2.csr -out centos2.crt
+// 使用ca签名证书（另一种命令）
+[root@centos CA]# openssl verify -CAfile ca.crt http.crt
+// 验证证书
+// server_crt 是 openssl.cnf 中的配置
+[ server_crt ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+
+
+HTTP服务配置
+1. 安装httpd服务，以及ssl支持
+yum -y install httpd mod_ssl
+2. 复制ca.crt、http.crt、http.key到HTTP服务器上
+scp ca.crt centos2:~/
+scp http.crt centos2:~/
+scp http.key centos2:~/
+3. 添加CA证书到配置文件/etc/httpd/conf.d/ssl.conf
+SSLCertificateKeyFile /root/http.key
+SSLCertificateFile /root/http.crt
+SSLCACertificateFile /root/ca.crt
+4. 重启httpd
+systemctl restart httpd
