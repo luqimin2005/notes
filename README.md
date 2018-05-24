@@ -1,5 +1,5 @@
 # Notes
-My notes of study .
+My notes for study .
 ```
   git add doc.txt
 
