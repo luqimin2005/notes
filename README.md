@@ -8,6 +8,3 @@ My notes for study .
   git push -u origin master
 ```
 EOF
-11
-123
-and simple.
