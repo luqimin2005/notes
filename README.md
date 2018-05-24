@@ -10,4 +10,8 @@ My notes for study .
 EOF
 11
 123
-& simple.
+<<<<<<< HEAD
+AND simple.
+=======
+AND simple.
+>>>>>>> feature1
