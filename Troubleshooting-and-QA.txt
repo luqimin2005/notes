@@ -1,0 +1,27 @@
+1、ambari-agent 注册失败
+ 
+【论坛解释】当使用Python-2.7.5及以上版本时，默认使用SSL验证，
+修改ambari-agent配置文件 
+[security]
+force_https_protocol=PROTOCOL_TLSv1_2
+
+2、缺少python-devel
+标准的SuSE不提供改devel包，下载python-devel-2.7.9版本，需匹配python-2.7.9版本，在安装ambari前检查python版本
+suse1:~ # rpm -e --nodeps python-2.7.13-27.1.x86_64
+suse1:~ # zypper in python (安装python，并降级所有依赖包)
+suse1:~ # rpm -ivh python-devel-2.7.9-24.2.x86_64.rpm
+suse1:~ # python --version
+Python 2.7.9
+【该版本Python并不会导致ambari-agent注册失败】
+
+3、DataNode安装失败
+系统自带snappy包与HDP需求的版本不一致，卸载即可
+suse1:~ # rpm -qa | grep libsnappy1
+libsnappy1-1.1.3-1.2.x86_64
+suse1:~ # rpm -e libsnappy1-1.1.3-1.2.x86_64
+安装成功后，查询snappy版本：
+suse1:~ # rpm -qa | grep snappy
+snappy-1.0.5-1.x86_64
+snappy-devel-1.0.5-1.x86_64
+
+
