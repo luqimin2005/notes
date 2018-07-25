@@ -21,8 +21,7 @@ chown -R yarn /sys/fs/cgroup/net_cls/yarn
 ```
 <property>
  <name>yarn.nodemanager.container-executor.class</name>
- <value>org.apache.hadoop.yarn.server.nodemanager.LinuxContainerExecutor</
-value>
+ <value>org.apache.hadoop.yarn.server.nodemanager.LinuxContainerExecutor</value>
 </property>
 
 <property>
@@ -31,10 +30,8 @@ value>
 </property> 
 
 <property>
- <name>yarn.nodemanager.linux-container-executor.resources-handler.class</
-name>
- <value>org.apache.hadoop.yarn.server.nodemanager.util.
-CgroupsLCEResourcesHandler</value>
+ <name>yarn.nodemanager.linux-container-executor.resources-handler.class</name>
+ <value>org.apache.hadoop.yarn.server.nodemanager.util.CgroupsLCEResourcesHandler</value>
 </property>
 
 <property>
@@ -58,8 +55,7 @@ CgroupsLCEResourcesHandler</value>
 </property> 
 
 <property> 
- <name>yarn.nodemanager.linux-container-executor.cgroups.strict-resource-
-usage</name>
+ <name>yarn.nodemanager.linux-container-executor.cgroups.strict-resource-usage</name>
  <value>true</value>
 </property>
 ```
