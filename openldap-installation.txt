@@ -1,0 +1,82 @@
+# OpenLdap配置
+
+ser1.example.com
+安装openldap相关组件
+sudo yum -y reinstall openldap openldap-clients openldap-devel openldap-servers
+
+配置openldap
+sudo vim slapd.d/cn\=config/olcDatabase\=\{2\}hdb.ldif
+修改两行：olcSuffix、olcRootDN
+添加一行：olcRootPW，并自定义密码
+sudo vim slapd.d/cn\=config/olcDatabase\=\{1\}monitor.ldif
+修改olcAccess中dn.base的相关参数
+
+准备ldap数据库
+sudo cp /usr/share/openldap-servers/DB_CONFIG.example \
+/var/lib/ldap/DB_CONFIG
+更改ldap目录的用户权限
+sudo chown -R ldap:ldap /var/lib/ldap/
+sudo chown -R ldap:ldap /etc/openldap/
+测试配置
+sudo slaptest -u
+
+启动slapd服务，并设置为开机启动
+sudo systemctl start slapd
+sudo systemctl enable slapd
+
+sudo vim /etc/openldap/ldap.conf
+
+添加需要的ldap的schema
+cd /etc/openldap/schema/
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f core.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f cosine.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f nis.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f collective.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f corba.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f duaconf.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f dyngroup.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f inetorgperson.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f java.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f misc.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f openldap.ldif 
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f pmi.ldif 
+ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f ppolicy.ldif
+
+初始化BaseDN
+cat base.ldif
+dn: dc=example,dc=com
+objectclass: dcObject
+objectclass: organization
+o: describe
+dc: example
+
+ldapadd –x –D “cn=admin,dc=example,dc=com” –W –f base.ldif
+
+客户端配置
+yum -y install nss-pam-ldapd
+authconfig --disableldaptls --enableldap --enableldapauth \
+--disableshadow --disablefingerprint \
+--ldapserver=ldap://ser1.example.com \
+--ldapbasedn="dc=example,dc=com" \
+--update
+
+测试：
+./ssh.sh “getent passwd | grep luqimin”
+
+
+
+------------------------------
+
+KDC安装:
+yum -y install krb5-server krb5-libs krb5-workstation
+vim /etc/krb5.conf
+EXAMPLE.COM
+
+kdb5_utils create -s
+
+systemctl start krb5kdc
+systemctl start kadmin
+
+kadmin.local -q “addprinc admin/admin”
+
+
