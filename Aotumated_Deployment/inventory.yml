@@ -1,0 +1,10 @@
+---
+- name: Create Inventory From Template
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - include_vars: inventory_vars.yml
+    - template:
+        src: inventory.j2
+        dest: "{{ current_dir }}/inventory"
