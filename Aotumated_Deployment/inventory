@@ -1,0 +1,5 @@
+
+[hdp-servers]
+hdp-1 ansible_host=192.168.100.135 ansible_user=root ansible_ssh_private_key_file="~/.ssh/id_rsa" rack=/default-rack hostname=s1.luqm.local
+hdp-2 ansible_host=192.168.100.174 ansible_user=root ansible_ssh_private_key_file="~/.ssh/id_rsa" rack=/default-rack hostname=s2.luqm.local
+hdp-3 ansible_host=192.168.100.175 ansible_user=root ansible_ssh_private_key_file="~/.ssh/id_rsa" rack=/default-rack hostname=s3.luqm.local

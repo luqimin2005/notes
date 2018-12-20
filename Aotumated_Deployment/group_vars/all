@@ -1,0 +1,44 @@
+---
+
+localhost_ip: '192.168.100.135'
+cluster_name: 'mycluster'
+ambari_version: '2.7.3.0-139'
+hdp_version: '3.0.1.0'
+hdp_build_number: 'auto'
+hdp_utils_version: '1.1.0.22'
+# os_repo_url: 'http://192.168.100.135/os/CentOS-7.2.1511/'
+timezone: 'Asia/Shanghai'
+# ntp_server: '192.168.100.135'
+mysql_version: 5.6
+# mysql_repo_url: "http://repo.mysql.com/yum/mysql-{{ mysql_version }}-community/el/7/$basearch/"
+
+
+jdk: oraclejdk
+oraclejdk_options:
+  base_folder: '/usr/java'
+  tarball_location: '/root/jdk-8u191-linux-x64.tar.gz'
+  jce_location: '/tmp/jce_policy-8.zip'
+  remote_files: no
+
+database: 'embedded'
+database_options:
+  add_repo: yes
+  external_hostname: ''
+  ambari_db_name: 'ambari'
+  ambari_db_username: 'ambari'
+  ambari_db_password: 'ambari'
+  hive_db_name: 'hive'
+  hive_db_username: 'hive'
+  hive_db_password: 'hive'
+  oozie_db_name: 'oozie'
+  oozie_db_username: 'oozie'
+  oozie_db_password: 'oozie'
+
+security: 'none'
+
+ambari_admin_password: 'admin'
+default_password: 'admin'
+
+
+
+

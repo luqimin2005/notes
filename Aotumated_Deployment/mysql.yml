@@ -1,0 +1,11 @@
+---
+# 获取各主机的facts
+- hosts: all
+  tasks:
+    - debug:
+        msg: "{{ ansible_fqdn }}"
+
+- name: MYSQL TEST
+  hosts: "{{ groups.all[0] }}"
+  roles:
+    - database

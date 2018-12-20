@@ -8,6 +8,8 @@
 # Created By Luqm@alongtech.com.
 # Date: 2018/12/18.
 
+echo '' > inventory
+
 INVENTORY_VARS=inventory_vars.yml
 
 # Get the current working directory.
@@ -25,4 +27,4 @@ else
   echo "current_dir: $PWD" >> $INVENTORY_VARS
 fi  
 
-ansible-playbook inventory.yml
+ansible-playbook -i inventory inventory.yml

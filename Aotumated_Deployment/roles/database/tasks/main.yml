@@ -1,0 +1,78 @@
+---
+- name: Add the mysql repository (yum)
+  yum_repository:
+    name: mysql-community
+    description: "MySQL {{ mysql_version }} Community Server"
+    baseurl: "{{ mysql_repo_url }}"
+    state: present
+    gpgcheck: no
+    enabled: yes
+
+- name: Install MySQL Packages - {{ mysql_packages }}
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items: "{{ mysql_packages }}"
+
+- block:
+    - name: Configure mysql to listen on all interfaces
+      ini_file:
+        path: "{{ mysql_config_file }}"
+        create: no
+        section: "mysqld"
+        option: "bind-address"
+        value: "*"
+        no_extra_spaces: yes
+        state: present
+      notify: restart_mysql
+
+    - name: Set mysql max_connections
+      ini_file:
+        path: "{{ mysql_config_file }}"
+        create: no
+        section: "mysqld"
+        option: "max_connections"
+        value: "{{ max_connections }}"
+        no_extra_spaces: yes
+        state: present
+      notify: restart_mysql
+
+- meta: flush_handlers
+
+- name: Start MySQL Service - {{ mysql_service_name }}
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+
+- name: Enable MySQL Service - {{ mysql_service_name }}
+  service:
+    name: "{{ mysql_service_name }}"  
+    enabled: yes
+  ignore_errors: true
+
+- name: Prepare the ambari database
+  include_tasks: mysql_play.yml
+  vars:
+    db_name: "{{ database_options.ambari_db_name }}"
+    db_username: "{{ database_options.ambari_db_username }}"
+    db_password: "{{ database_options.ambari_db_password }}"
+    db_client_hosts: "{{ ambari_hosts }}"
+  tags:
+    - mysql_user
+
+- name: Prepare the hive database
+  include_tasks: mysql_play.yml
+  vars:
+    db_name: "{{ database_options.hive_db_name }}"
+    db_username: "{{ database_options.hive_db_username }}"
+    db_password: "{{ database_options.hive_db_password }}"
+    db_client_hosts: "{{ hive_hosts }}"
+
+- name: Prepare the oozie database
+  include_tasks: mysql_play.yml
+  vars:
+    db_name: "{{ database_options.oozie_db_name }}"
+    db_username: "{{ database_options.oozie_db_username }}"
+    db_password: "{{ database_options.oozie_db_password }}"
+    db_client_hosts: "{{ oozie_hosts }}"

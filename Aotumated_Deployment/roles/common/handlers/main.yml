@@ -1,0 +1,6 @@
+---
+# handlers file for common
+- name: restart_ntpd
+  service:
+    name: ntpd
+    state: restarted

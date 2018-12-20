@@ -1,0 +1,23 @@
+---
+# vars file for common
+packages:
+  - openssh-clients
+  - openssl-devel
+  - openssl
+  - curl
+  - unzip
+  - tar
+  - wget
+  - ntp
+  - libtirpc-devel
+openjdk_package: java-1.8.0-openjdk-devel
+ntp_service_name: ntpd
+ntp_service_name_2: chronyd
+firewall_service_name: 
+  - firewalld
+  - iptables
+
+ambari_repo_url: "{{ repo_base_url }}/ambari/centos{{ ansible_distribution_major_version }}/{{ ambari_version }}"
+
+
+# update_grub_command: 'grub2-mkconfig -o "$(readlink -n /etc/grub2.cfg)"'

@@ -1,0 +1,54 @@
+---
+
+# 当没有指定"os_repo_url"时，上传操作系统镜像到集群的最后一台主机，并挂载到http目录下
+# 上传 OS、Ambari、HDP、HDP-UTILS、MySQL
+- name: Upload OS Image to Cluster
+  hosts: "{{ groups.all[-1] }}"
+  roles:
+    - upload_images
+
+# 当没有指定"ntp_server"时，配置集群第一台主机为ntp_server，其他为ntp_client
+- name: Prepare NTP Server - {{ groups.all[0] }}
+  hosts: "{{ groups.all[0] }}"
+  tasks:
+    - name: Configurate the NTP Server Config - /etc/ntp.conf
+      copy:
+        src: ntp.conf
+        dest: /etc/ntp.conf
+        owner: root
+        group: root
+        mode: 0644
+        force: yes
+      when: ntp_server is not defined
+
+# 当没有指定"ntp_server"时，配置集群第一台主机为ntp_server，其他为ntp_client
+- name: Prepare NTP Client - Not "{{ groups.all[0] }}"
+  hosts: all, !{{ groups.all[0] }}
+  tasks:
+    - block:
+        - lineinfile: 
+            path: /etc/ntp.conf
+            regexp: '^server'
+            state: absent
+        - lineinfile:
+            path: /etc/ntp.conf
+            line: server {{ hostvars[groups.all[0]]['ansible_host'] }}
+      when: ntp_server is not defined
+
+# 为集群内所有主机配置repo
+- name: Setting Host Enviroemnt for All Hosts in Cluster
+  hosts: all
+  vars: 
+    repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
+  roles:
+    - common
+
+# 配置MySQL数据库，授权
+- name: Config MySQL Server and Create Requied Databases
+  hosts: "{{ groups.all[0] }}"
+  roles:
+    - database
+  tasks:
+  - name: Messages at the end.
+    debug:
+      msg: "IF YOU SEE THIS MESSAGE, YOUR TEST SUCCESSED."

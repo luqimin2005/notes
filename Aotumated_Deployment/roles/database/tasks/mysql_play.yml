@@ -1,0 +1,51 @@
+---
+# 该模块需要使用Python3，或者高版本的libz.so
+# wget https://zlib.net/zlib-1.2.11.tar.gz
+# tar -xzf zlib-1.2.11.tar.gz
+# cd zlib-1.2.11
+# ./configure --shared --prefix=/usr
+# make
+# make install
+
+# 不需要初始化root密码 #
+# 安装完MySQL之后，root账号默认不需要密码可以进入，因此以下不需要参数 login_user 和 login_password
+# 初始化root密码：（仅执行一次）
+  # /usr/bin/mysqladmin -u root password 'new-password'
+  # /usr/bin/mysqladmin -u root -h s1.luqm.local password 'new-password'
+
+- name: Create Database - {{ db_name }}
+  mysql_db:
+    name: "{{ db_name }}"
+    encoding: "utf8"
+    state: present
+    login_user: "root"
+    login_password: "root"
+
+# - name: Create Database User - {{ db_username }}
+#   mysql_user:
+#     name: "{{ db_username }}"
+#     password: "{{ db_password }}"
+#     state: present
+#     login_user: "root"
+#     login_password: "root"
+
+- name: Grant Privileges to Database User - {{ db_username }}
+  mysql_user:
+    name: "{{ db_username }}"
+    password: "{{ db_password }}"
+    host: "{{ hostvars[item]['ansible_fqdn'] }}"
+    priv: "{{ db_name }}.*:ALL"
+    state: present
+    login_user: "root"
+    login_password: "root"
+  with_items: "{{ db_client_hosts }}"
+  # with_items: "{{ groups.all }}"
+
+
+
+
+
+
+
+
+

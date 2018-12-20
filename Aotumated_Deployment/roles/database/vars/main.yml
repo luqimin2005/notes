@@ -1,0 +1,12 @@
+---
+
+mysql_packages:
+  - mysql-community-server
+  - MySQL-python
+mysql_service_name: mysql
+mysql_config_file: /etc/my.cnf
+
+# mysql_repo_url: "http://repo.mysql.com/yum/mysql-{{ mysql_version }}-community/el/7/$basearch/"
+
+repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
+mysql_repo_url: "{{ repo_base_url }}/mysql-community-{{ mysql_version }}-centos{{ ansible_distribution_major_version }}"

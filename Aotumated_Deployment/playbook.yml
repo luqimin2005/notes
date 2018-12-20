@@ -1,0 +1,9 @@
+---
+- name: TEST
+  hosts: all
+  
+  roles:
+    - common
+  tasks:
+    - debug:
+        msg: "If you see this message, your test is running successfully."

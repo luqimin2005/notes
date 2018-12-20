@@ -1,0 +1,49 @@
+- name: Install OpenJDK
+  package:
+    name: "{{ openjdk_package }}"
+    update_cache: yes
+    state: present
+  when: jdk == "openjdk"
+
+- block:
+    - name: Create JAVA Base Directory - {{ oraclejdk_options.base_folder }}
+      file:
+        path: "{{ oraclejdk_options.base_folder }}"
+        state: directory
+
+    - name: Extract the Oracle JDK tarball - {{ oraclejdk_options.tarball_location }}
+      unarchive:
+        src: "{{ oraclejdk_options.tarball_location }}"
+        dest: "{{ oraclejdk_options.base_folder }}"
+        owner: root
+        group: root
+        mode: 0755
+        remote_src: no
+        list_files: yes
+        keep_newer: yes
+      register: tarball_content
+
+    - name: Set JDK Folder Name - {{ tarball_content.files[0] | regex_replace('/(.*)$','') }}
+      set_fact:
+        jdk_folder: "{{ tarball_content.files[0] | regex_replace('/(.*)$','') }}"
+
+    - name: Create JAVA_HOME Symlink - {{ oraclejdk_options.base_folder }}/latest
+      file:
+        src: "{{ oraclejdk_options.base_folder }}/{{ jdk_folder }}"
+        dest: "{{ oraclejdk_options.base_folder }}/latest"
+        state: link
+        force: yes
+
+    - name: Config Systemc Enviroment $JAVA_HOME
+      lineinfile:
+        path: /etc/profile
+        line: "export JAVA_HOME=/usr/java/latest"
+        state: present
+
+    - name: Add $JAVA_HOME/bin to $PATH
+      lineinfile:
+        path: /etc/profile
+        line: "export PATH=$JAVA_HOME/bin:$PATH"
+        state: present
+
+  when: jdk == "oraclejdk"

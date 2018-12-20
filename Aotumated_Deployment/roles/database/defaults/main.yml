@@ -1,0 +1,7 @@
+---
+max_connections: 200
+ambari_hosts: "{{ groups.all[0] }}"
+hive_hosts: 
+  - "{{ groups.all[1] }}"
+  - "{{ groups.all[0] }}"
+oozie_hosts: "{{ groups.all[2] }}"

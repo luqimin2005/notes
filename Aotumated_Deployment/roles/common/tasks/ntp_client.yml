@@ -1,0 +1,17 @@
+---
+# name: Configurate NTP Client - /etc/ntp.conf
+
+- block:
+
+    - lineinfile: 
+        path: /etc/ntp.conf
+        regexp: '^server'
+        state: absent
+
+    - lineinfile:
+        path: /etc/ntp.conf
+        line: server {{ ntp_server }}
+
+  when: ntp_server is defined
+
+

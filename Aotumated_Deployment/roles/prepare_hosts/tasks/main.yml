@@ -1,0 +1,23 @@
+---
+# tasks file for prepare_repository
+- name: Config TEMP OS Repository
+  yum_repository:
+    name: "{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+    description: "OS Version - {{ ansible_distribution }}-{{ ansible_distribution_version }}"
+    baseurl: "http://{{ localhost_ip }}/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+    state: present
+    enabled: yes
+    gpgcheck: no
+
+- name: Install Pre-required Packages - curl & unzip & tar & wget
+  package:
+    name: "{{ item }}"
+    update_cache: yes
+    state: present
+  with_items:
+    - curl
+    - unzip
+    - tar
+    - wget
+
+

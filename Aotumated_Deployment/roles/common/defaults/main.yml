@@ -1,0 +1,6 @@
+---
+# defaults file for common
+swappiness: 1
+repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
+os_repo_url: "{{ repo_base_url }}/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+

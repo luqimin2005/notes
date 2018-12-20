@@ -1,0 +1,23 @@
+---
+- name: Delete All the Defaults Repo Files
+  shell: "mv /etc/yum.repos.d/* /opt/"
+  ignore_errors: true
+
+- name: Add the OS Repository - YUM
+  yum_repository:
+    name: "{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+    description: "OS Version - {{ ansible_distribution }}-{{ ansible_distribution_version }}"
+    baseurl: "{{ os_repo_url }}"
+    state: present
+    enabled: yes
+    gpgcheck: no
+
+- name: Add the Ambari Repository - YUM
+  yum_repository:
+    name: "ambari-{{ ambari_version }}"
+    description: "ambari Version - ambari-{{ ambari_version }}"
+    baseurl: "{{ ambari_repo_url }}"
+    file: 'ambari'
+    state: present
+    enabled: yes
+    gpgcheck: no

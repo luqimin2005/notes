@@ -1,0 +1,107 @@
+---
+- block:
+    - name: Config TEMP OS Repository
+      yum_repository:
+        name: "{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+        description: "OS Version - {{ ansible_distribution }}-{{ ansible_distribution_version }}"
+        baseurl: "http://{{ localhost_ip }}/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+        state: present
+        enabled: yes
+        gpgcheck: no
+
+    - name: Install Pre-required Packages - httpd and etc.
+      package:
+        name: "{{ item }}"
+        update_cache: yes
+        state: present
+      with_items:
+        - curl
+        - unzip
+        - tar
+        - wget
+        - httpd
+
+    - name: Start and Enable httpd on {{ groups.all[-1] }}
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Stop and Disable Firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: no
+      ignore_errors: true
+
+- block:
+    - name: Create Repo Dir under httpd_root
+      file:
+        path: /var/www/html/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}
+        recurse: yes
+        state: directory
+
+    - name: Upload OS Image to {{ groups.all[-1] }}
+      copy:
+        src: "/root/{{ ansible_distribution }}-{{ ansible_distribution_version }}.iso"
+        dest: /opt/os/
+        force: no
+
+    - name: Mount OS Image to /var/www/html/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}
+      mount:
+        path: /var/www/html/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}
+        src: /opt/os/{{ ansible_distribution }}-{{ ansible_distribution_version }}.iso
+        fstype: iso9660
+        opts: loop
+        state: present
+
+  when: os_repo_url is not defined
+
+# Upload Ambari tarball to the last hosts in cluster.
+- name: Extract the Ambari tarball to http_root
+  unarchive:
+    src: "/root/ambari-{{ ambari_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: no
+    list_files: no
+    keep_newer: no
+
+# Upload HDP tarball to the last hosts in cluster.
+# - name: Extract the HDP tarball to http_root
+#   unarchive:
+#     src: "/root/HDP-{{ hdp_version }}-centos{{ ansible_distribution_major_version }}-rpm.tar.gz"
+#     dest: /var/www/html/
+#     owner: root
+#     group: root
+#     mode: 0755
+#     remote_src: no
+#     list_files: no
+#     keep_newer: no
+
+# Upload HDP-UTILS tarball to the last hosts in cluster.
+- name: Extract the HDP-UTILS tarball to http_root
+  unarchive:
+    src: "/root/HDP-UTILS-{{ hdp_utils_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: no
+    list_files: no
+    keep_newer: no
+
+# Upload MySQL tarball to the last hosts in cluster.
+- name: Extract the MySQL tarball to http_root
+  unarchive:
+    src: "/root/mysql-community-{{ mysql_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: no
+    list_files: no
+    keep_newer: no
+    # mysql_repo: http://xxx/mysql-community-{{ mysql_version }}-centos{{ ansible_distribution_major_version }}
