@@ -1,0 +1,13 @@
+---
+
+- name: Extract the required tarballs to http_root
+  unarchive:
+    src: "{{ item }}"
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: no
+    list_files: no
+    keep_newer: no
+  with_items: "{{ hdp_tarballs }}"

@@ -1,3 +1,108 @@
 ---
 # tasks file for ambari-config
 
+# Accept GPL License
+- name: Set the GPL Licensed setting in Ambari
+  lineinfile:
+    path: /etc/ambari-server/conf/ambari.properties
+    backup: no
+    state: present
+    regexp: "^gpl.license.accepted.*"
+    line: "gpl.license.accepted=true"
+  notify: restart_ambari-server
+
+# Get HDP Build Number
+- block:
+    - name: Attempt to read the HDP repo build.id file (Ambari >= 2.6)
+      uri:
+        url: "{{ hdp_main_repo_url }}/build.id"
+        method: GET
+        return_content: yes
+      register: hdp_repo_build_id
+
+    - name: Set the HDP build number (Ambari >= 2.6)
+      set_fact:
+        hdp_build_number: "{{ (hdp_repo_build_id.content|from_yaml).BUILD_NUMBER }}"
+  when: hdp_build_number == 'auto'
+
+# Upload HDP Version Definition File
+- name: Upload the HDP Version Definition file (Ambari >= 2.6)
+  template:
+    src: "{{ item }}"
+    dest: "/tmp/cluster_vdf.xml"
+    mode: 0640
+    force: yes
+  with_first_found:
+    - files:
+        - "vdf-HDP-{{ hdp_version }}.xml.j2"
+        - "vdf-HDP-{{ hdp_minor_version }}-latest.xml.j2"
+        - "vdf-HDP-{{ hdp_major_version }}-latest.xml.j2"
+      paths:
+        - ../templates
+
+# Modify Ambari-Server Config
+- name: ​Enable User Home Directory Creation
+  lineinfile:
+    path: /etc/ambari-server/conf/ambari.properties
+    state: present
+    line: "{{ item }}"
+  notify: restart_ambari-server
+  with_items:
+    - "ambari.post.user.creation.hook.enabled=true"
+    - "ambari.post.user.creation.hook=/var/lib/ambari-server/resources/scripts/post-user-creation-hook.sh"
+
+# Apply HDP Version Definition File
+- block:
+    - name: Attempt to get an existing VDF for the required version (Ambari >= 2.6)
+      uri:
+        url: "http://{{ ansible_fqdn }}:8080/api/v1/version_definitions?VersionDefinition/release/version=true"
+        method: GET
+        force_basic_auth: yes
+        user: "{{ ambari_admin_user }}"
+        password: "{{ ambari_admin_password }}"
+        headers: '{"X-Requested-By":"ambari"}'
+        status_code: 200,201,202
+        return_content: yes
+      register: existing_vdf
+
+    - name: Register the VDF with Ambari (Ambari >= 2.6)
+      uri:
+        url: http://{{ ansible_fqdn }}:8080/api/v1/version_definitions
+        method: POST
+        force_basic_auth: yes
+        user: "{{ ambari_admin_user }}"
+        password: "{{ ambari_admin_password }}"
+        headers: '{"X-Requested-By":"ambari"}'
+        body: " {\"VersionDefinition\":{ \"version_url\":\"file:/tmp/cluster_vdf.xml\"}}"
+        body_format: raw
+        status_code: 200,201,202
+        return_content: no
+      when: (existing_vdf.content|from_yaml)['items'] | length == 0
+      register: register_results
+      ignore_errors: true
+    
+    # - debug: var=register_results
+    - name: Fail if the VDF could not be loaded
+      fail:
+        msg: VDF could not be loaded. Error is {{ register_results.content }}!
+      when: register_results is failed and not register_results.content is search("Setting up base urls that contain the same versions of components will cause stack upgrade to fail")
+
+- meta: flush_handlers
+
+# Register Ambari-Agent
+- name: Make sure all of the Ambari Agents have registered
+  uri:
+    url: http://{{ ansible_fqdn }}:8080/api/v1/hosts/{{ hostvars[item]['ansible_fqdn']|lower }}
+    method: GET
+    force_basic_auth: yes
+    user: "{{ ambari_admin_user }}"
+    password: "{{ ambari_admin_password }}"
+    headers: '{"X-Requested-By":"ambari"}'
+    status_code: 200,201,202,404
+    return_content: no
+  with_items: "{{ groups['all'] }}"
+  register: result
+  until: "result.status != 404"
+  retries: 100
+  delay: 5
+

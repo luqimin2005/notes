@@ -6,6 +6,7 @@
 HOST_PREFIX='ansible_host'
 HOSTS=inventory
 PASSWORD='password'
+# PASSWORD=$1
 
 # Use ssh-keygen to generating the key pairs.
 # Overwrite the key pairs even if existed.

@@ -70,21 +70,32 @@
     keep_newer: no
 
 # Upload HDP tarball to the last hosts in cluster.
-# - name: Extract the HDP tarball to http_root
-#   unarchive:
-#     src: "/root/HDP-{{ hdp_version }}-centos{{ ansible_distribution_major_version }}-rpm.tar.gz"
-#     dest: /var/www/html/
-#     owner: root
-#     group: root
-#     mode: 0755
-#     remote_src: no
-#     list_files: no
-#     keep_newer: no
+- name: Extract the HDP tarball to http_root
+  unarchive:
+    src: "/root/HDP-{{ hdp_version }}-centos{{ ansible_distribution_major_version }}-rpm.tar.gz"
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: no
+    list_files: no
+    keep_newer: no
 
 # Upload HDP-UTILS tarball to the last hosts in cluster.
 - name: Extract the HDP-UTILS tarball to http_root
   unarchive:
     src: "/root/HDP-UTILS-{{ hdp_utils_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: no
+    list_files: no
+    keep_newer: no
+
+- name: Extract the GPL tarball to http_root
+  unarchive:
+    src: "/root/HDP-GPL-{{ hdp_version }}-centos{{ ansible_distribution_major_version }}-gpl.tar.gz"
     dest: /var/www/html/
     owner: root
     group: root
@@ -105,3 +116,34 @@
     list_files: no
     keep_newer: no
     # mysql_repo: http://xxx/mysql-community-{{ mysql_version }}-centos{{ ansible_distribution_major_version }}
+
+#######################################
+# 以下使用 upload.yml 传参，上传并解压文件 #
+#######################################
+
+# - name: Prepare the required tarballs - AMBARI-{{ ambari_version }}
+#   include_tasks: upload.yml
+#   vars:
+#     hdp_tarballs: "/root/ambari-{{ ambari_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+
+# - name: Prepare the required tarballs - HDP-{{ hdp_version }}
+#   include_tasks: upload.yml
+#   vars:
+#     hdp_tarballs: "/root/HDP-{{ hdp_version }}-centos{{ ansible_distribution_major_version }}-rpm.tar.gz"
+
+# - name: Prepare the required tarballs - HDP-UTILS-{{ hdp_utils_version }}
+#   include_tasks: upload.yml
+#   vars:
+#     hdp_tarballs: "/root/HDP-UTILS-{{ hdp_utils_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+
+# - name: Prepare the required tarballs - GPL-{{ hdp_version }}
+#   include_tasks: upload.yml
+#   vars:
+#     hdp_tarballs: "/root/HDP-GPL-{{ hdp_version }}-centos{{ ansible_distribution_major_version }}-gpl.tar.gz"
+
+# - name: Prepare the required tarballs - MySQL-{{ mysql-version }}
+#   include_tasks: upload.yml
+#   vars:
+#     hdp_tarballs: "/root/mysql-community-{{ mysql_version }}-centos{{ ansible_distribution_major_version }}.tar.gz"
+
+

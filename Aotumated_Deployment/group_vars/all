@@ -1,28 +1,34 @@
 ---
 
 localhost_ip: '192.168.100.135'
+
 cluster_name: 'mycluster'
 ambari_version: '2.7.3.0-139'
-hdp_version: '3.0.1.0'
+hdp_version: '3.1.0.0-78'
 hdp_build_number: 'auto'
 hdp_utils_version: '1.1.0.22'
+hdp_gpl_version: '3.1.0.0-78'
+mysql_version: '5.6'
+jdk: oraclejdk
+
+# if hdp_version < 2.6.4 ; hdp_utils_version = 1.1.0.21
+# if hdp_version >= 2.6.4 ; hdp_utils_version = 1.1.0.22
+
 # os_repo_url: 'http://192.168.100.135/os/CentOS-7.2.1511/'
-timezone: 'Asia/Shanghai'
 # ntp_server: '192.168.100.135'
+
+
+timezone: 'Asia/Shanghai'
+
 # mysql_repo_url: "http://repo.mysql.com/yum/mysql-{{ mysql_version }}-community/el/7/$basearch/"
 
-
-jdk: oraclejdk
 oraclejdk_options:
   base_folder: '/usr/java'
   tarball_location: '/root/jdk-8u191-linux-x64.tar.gz'
   remote_files: no
 
 database: 'mysql'
-mysql_version: 5.6
 database_options:
-  add_repo: yes
-  external_hostname: ''
   ambari_db_name: 'ambari'
   ambari_db_username: 'ambari'
   ambari_db_password: 'ambari'
@@ -33,11 +39,18 @@ database_options:
   oozie_db_username: 'oozie'
   oozie_db_password: 'oozie'
 
-security: 'none'
-
-ambari_admin_password: 'admin'
 default_password: 'admin'
+ambari_admin_user: 'admin'
+ambari_admin_password: 'admin'
 
 
 
 
+
+######################
+## helper variables ##
+######################
+
+hdp_minor_version: "{{ hdp_version | regex_replace('.[0-9]+.[0-9]+[0-9_-]*$','') }}"
+hdp_major_version: "{{ hdp_minor_version.split('.').0 }}"
+hdfs_ha_name: "{{ cluster_name | regex_replace('_','-') }}"
