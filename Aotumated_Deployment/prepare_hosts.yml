@@ -1,7 +1,7 @@
 ---
-
-# 当没有指定"os_repo_url"时，上传操作系统镜像到集群的最后一台主机，并挂载到http目录下
-# 上传 OS、Ambari、HDP、HDP-UTILS、MySQL
+# 默认指定集群内最后一台主机作为软件YUM源地址
+# 当没有指定"os_repo_url"时，上传操作系统镜像到YUM源镜像主机，并挂载到http目录下
+# 其他上传tarball: Ambari、HDP、HDP-UTILS、MySQL
 - name: Upload OS Image to Cluster
   hosts: "{{ groups.all[-1] }}"
   roles:
@@ -35,11 +35,12 @@
             line: server {{ hostvars[groups.all[0]]['ansible_host'] }}
       when: ntp_server is not defined
 
-# 为集群内所有主机配置repo
+# 为集群内所有主机配置repo、防火墙、SELinux、NTP、JDK、和其他系统优化参数等。
 - name: Setting Host Enviroemnt for All Hosts in Cluster
   hosts: all
-  vars: 
-    repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
+  # Defined in Role Defaults Variables.
+  # vars: 
+  #   repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
   roles:
     - common
 
@@ -48,7 +49,10 @@
   hosts: "{{ groups.all[0] }}"
   roles:
     - database
+  
+- name: TEST FINISHED
+  hosts: all
+  gather_facts: false
   tasks:
-  - name: Messages at the end.
-    debug:
-      msg: "IF YOU SEE THIS MESSAGE, YOUR TEST SUCCESSED."
+    - debug:
+        msg: "IF YOU SEE THIS MESSAGE, YOUR TEST SUCCESSED."

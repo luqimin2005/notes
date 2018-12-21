@@ -1,0 +1,17 @@
+---
+- name: TEST AMBARI-AGENT
+  hosts: all
+  roles:
+    - ambari-agent
+
+- name: TEST AMBARI-SERVER
+  hosts: "{{ groups.all[0] }}"
+  roles:
+    - ambari-server
+
+- name: MSG at FINISHED
+  hosts: all
+  gather_facts: false
+  tasks:
+    - debug:
+        msg: OK

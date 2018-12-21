@@ -1,0 +1,30 @@
+---
+# tasks file for ambari-agent
+- name: Install ambari-agent
+  package:
+    name: ambari-agent
+    update_cache: yes
+    state: latest
+  notify: reload_systemd
+
+
+- name: Set the Ambari Server in the agent configuration
+  lineinfile:
+    path: /etc/ambari-agent/conf/ambari-agent.ini
+    regexp: "^hostname="
+    line: "hostname={{ hostvars[groups.all[0]]['ansible_fqdn'] }}"
+    state: present
+  notify: restart_ambari-agent
+
+- meta: flush_handlers
+
+- name: Make sure the ambari-agent service is started
+  service:
+    name: ambari-agent
+    state: started
+
+- name: Make sure the ambari-agent service is enabled
+  service:
+    name: ambari-agent
+    enabled: yes
+  ignore_errors: true

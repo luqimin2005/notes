@@ -1,0 +1,10 @@
+---
+# handlers file for ambari-server
+- name: reload_systemd
+  systemd:
+    daemon_reload: yes
+  
+- name: restart_ambari-server
+  service:
+    name: ambari-server
+    state: restarted

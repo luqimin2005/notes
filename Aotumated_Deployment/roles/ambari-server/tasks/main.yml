@@ -1,0 +1,85 @@
+---
+# tasks file for ambari-server
+- name: Install ambari-server
+  package:
+    name: ambari-server
+    update_cache: yes
+    state: latest
+  notify: reload_systemd
+
+- meta: flush_handlers
+
+- name: Install JDK Driver
+  package:
+    name: "{{ item }}"
+    update_cache: yes
+    state: latest
+  with_items: "{{ mysql_packages }}"
+
+- block:
+    - name: Load the Ambari Server Schema - mysql
+      mysql_db:
+        name: "{{ database_options.ambari_db_name }}"
+        login_host: "{{ ansible_fqdn }}"
+        login_port: "3306"
+        login_user: "{{ database_options.ambari_db_username }}"
+        login_password: "{{ database_options.ambari_db_password }}"
+        state: import
+        target: /var/lib/ambari-server/resources/Ambari-DDL-MySQL-CREATE.sql
+      register: import_results
+      ignore_errors: true
+
+    # - debug: var=import_results
+    - name: Fail if the mysql schema could not be loaded
+      fail:
+        msg: Schema could not be loaded. Error is {{ import_results.msg }}!
+      when: import_results is failed and not import_results.msg is search("Table .* already exists")
+  
+  when: database == "mysql"
+
+- name: Configure the Ambari JDBC driver
+  shell: /usr/sbin/ambari-server setup --jdbc-db={{ database }} --jdbc-driver={{ mysql_jdbc_location }}
+  notify: restart_ambari-server
+
+- name: Set the Ambari Server database setup options
+  set_fact:
+    ambari_database_options: "--database={{ database }} \
+                              --databasehost={{ ansible_fqdn }} \
+                              --databaseport=3306 \
+                              --databasename={{ database_options.ambari_db_name }} \
+                              --databaseusername={{ database_options.ambari_db_username }} \
+                              --databasepassword={{ database_options.ambari_db_password }}"
+
+- name: Set the Ambari Server Java setup option - OpenJDK
+  set_fact:
+    ambari_java_options: "-j {{ openjdk_path }}"
+  when: jdk == "openjdk"
+
+- name: Set the Ambari Server Java setup option - OracleJDK
+  set_fact:
+    ambari_java_options: "-j {{ oraclejdk_options.base_folder }}/latest"
+  when: jdk == "oraclejdk"
+
+- name: Run Ambari Server setup
+  shell: /usr/sbin/ambari-server setup -s {{ ambari_java_options }} {{ ambari_database_options }}
+  notify: restart_ambari-server
+
+- name: Increase the Ambari Server startup timeout
+  lineinfile:
+    path: /etc/ambari-server/conf/ambari.properties
+    state: present
+    line: 'server.startup.web.timeout=120'
+  notify: restart_ambari-server
+
+- meta: flush_handlers
+
+- name: Make sure the ambari-server service is started
+  service:
+    name: ambari-server
+    state: started
+
+- name: Make sure the ambari-server service is enabled
+  service:
+    name: ambari-server
+    enabled: yes
+  ignore_errors: true
