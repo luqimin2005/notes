@@ -39,12 +39,61 @@ database_options:
   oozie_db_username: 'oozie'
   oozie_db_password: 'oozie'
 
-default_password: 'admin'
 ambari_admin_user: 'admin'
 ambari_admin_password: 'admin'
+default_password: 'admin'
+config_recommendation_strategy: 'NEVER_APPLY'
+
+cluster_template_file: 'cluster_template.j2'
+blueprint_name: '{{ cluster_name }}_blueprint'
+blueprint_file: 'blueprint_dynamic.j2'
+blueprint_dynamic:                                        # properties for the dynamic blueprint - these are only used by the 'blueprint_dynamic.j2' template to generate the JSON
+  - host_group: "hdp-master"
+    clients: ['ZOOKEEPER_CLIENT', 'HDFS_CLIENT', 'YARN_CLIENT', 'MAPREDUCE2_CLIENT', 'TEZ_CLIENT', 'PIG', 'SQOOP', 'HIVE_CLIENT', 'OOZIE_CLIENT', 'INFRA_SOLR_CLIENT', 'SPARK2_CLIENT']
+    services:
+      - ZOOKEEPER_SERVER
+      - NAMENODE
+      - SECONDARY_NAMENODE
+      - RESOURCEMANAGER
+      - APP_TIMELINE_SERVER
+      - YARN_REGISTRY_DNS
+      - TIMELINE_READER
+      - HISTORYSERVER
+      - SPARK2_JOBHISTORYSERVER
+      - HIVE_SERVER
+      - HIVE_METASTORE
+      - OOZIE_SERVER
+      - KNOX_GATEWAY
+      - AMBARI_SERVER
+      - INFRA_SOLR
+      - METRICS_COLLECTOR
+      - METRICS_GRAFANA
+      - METRICS_MONITOR
+      - HST_SERVER
+      - ACTIVITY_ANALYZER
+      - ACTIVITY_EXPLORER
+      - HST_AGENT
+  - host_group: "hdp-slave"
+    clients: ['ZOOKEEPER_CLIENT', 'HDFS_CLIENT', 'YARN_CLIENT', 'MAPREDUCE2_CLIENT', 'TEZ_CLIENT', 'PIG', 'SQOOP', 'HIVE_CLIENT', 'OOZIE_CLIENT', 'INFRA_SOLR_CLIENT', 'SPARK2_CLIENT']
+    services:
+      - DATANODE
+      - NODEMANAGER
+      - METRICS_MONITOR
+      - HST_AGENT
+
+smartsense:
+  id: ''
+  account_name: ''
+  customer_email: ''
+smartsense_security_options:
+  admin_password: "{{ default_password }}"
+logsearch_security_options:
+  admin_password: "{{ default_password }}"
+knox_security_options:
+  master_secret: "{{ default_password }}"
 
 
-
+security: 'none' 
 
 
 ######################

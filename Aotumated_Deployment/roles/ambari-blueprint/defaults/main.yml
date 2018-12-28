@@ -1,0 +1,6 @@
+---
+# defaults file for ambari-blueprint
+
+wait: true
+wait_timeout: 3600 
+mysql_port: 3306
