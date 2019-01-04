@@ -1,13 +1,11 @@
 ---
 
-localhost_ip: '192.168.100.135'
-
 cluster_name: 'mycluster'
-ambari_version: '2.7.3.0-139'
-hdp_version: '3.1.0.0-78'
+ambari_version: '2.7.3.0'
+hdp_version: '3.1.0.0'
 hdp_build_number: 'auto'
 hdp_utils_version: '1.1.0.22'
-hdp_gpl_version: '3.1.0.0-78'
+hdp_gpl_version: '3.1.0.0'
 mysql_version: '5.6'
 jdk: oraclejdk
 
@@ -15,6 +13,10 @@ jdk: oraclejdk
 # if hdp_version >= 2.6.4 ; hdp_utils_version = 1.1.0.22
 
 # os_repo_url: 'http://192.168.100.135/os/CentOS-7.2.1511/'
+
+# 自动检测集群的第一台主机（默认）
+# ambari_server: '192.168.100.135'
+# 自动检测ambari主机IP地址（默认）
 # ntp_server: '192.168.100.135'
 
 

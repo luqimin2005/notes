@@ -2,7 +2,8 @@
 # vars file for ambari-config
 
 # http://192.168.100.175
-repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
+# repo_base_url: "http://{{ hostvars[groups.all[-1]]['ansible_host'] }}"
+repo_base_url: "http://192.168.100.175"
 
 # centos7
 repo_os_family: "centos{{ ansible_distribution_major_version }}"

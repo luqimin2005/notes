@@ -3,10 +3,13 @@
 # Create By Luqm@alongtech.com.
 # Date: 2018/12/18.
 
-HOST_PREFIX='ansible_host'
-HOSTS=inventory
-PASSWORD='password'
+
+USERNAME="root"
+PASSWORD="password"
 # PASSWORD=$1
+
+HOST_PREFIX="ansible_host"
+HOSTS=inventory
 
 # Use ssh-keygen to generating the key pairs.
 # Overwrite the key pairs even if existed.
@@ -16,7 +19,7 @@ echo "Public and private key pairs have been generated."
 # Use ssh-copy-id to copy the Public key to everyhost in the inventory.
 for HOST in $(cat ${HOSTS} | grep ${HOST_PREFIX} | grep -v ^'#' | cut -d ' ' -f2 | cut -d '=' -f2)
 do 
-  sshpass -p $PASSWORD ssh-copy-id root@$HOST -o stricthostkeychecking=no >/dev/null 2>&1
+  sshpass -p $PASSWORD ssh-copy-id $USERNAME@$HOST -o stricthostkeychecking=no >/dev/null 2>&1
 
   if [ $? -eq 0 ]
   then

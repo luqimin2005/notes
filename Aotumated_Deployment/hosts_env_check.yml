@@ -1,0 +1,23 @@
+---
+- name: Hosts Envrionment Checking
+  hosts: all
+  vars:
+    ansible_ssh_user: root
+    ansible_ssh_pass: password
+  tasks:
+    - name: Checking Firewalld
+      shell: "systemctl is-active firewalld"
+      register: rst_firewalld
+      ignore_errors: True
+    - name: Checking iptables
+      shell: "systemctl is-active iptables"
+      register: rst_iptables
+      ignore_errors: True
+
+    - debug:
+        msg: "Firewalld is not running."
+      when: rst_firewalld.stdout_lines != "active"
+      
+    - debug:
+        msg: "iptables is not running."
+      when: rst_iptables.stdout_lines != "active"

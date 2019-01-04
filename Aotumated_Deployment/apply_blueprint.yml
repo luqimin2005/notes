@@ -11,4 +11,4 @@
   any_errors_fatal: true
   become: yes
   roles:
-    - ambari-blueprinta
+    - ambari-blueprint

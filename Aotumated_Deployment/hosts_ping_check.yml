@@ -1,0 +1,11 @@
+---
+- hosts: all
+  gather_facts: no
+  vars:
+    ansible_ssh_user: defaultUsername
+    ansible_ssh_pass: defaultPassword
+  tasks:
+    - ping:
+    #   register: rst_ping
+    # - debug: var=rst_ping
+      
