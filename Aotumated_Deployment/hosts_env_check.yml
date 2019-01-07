@@ -5,19 +5,77 @@
     ansible_ssh_user: root
     ansible_ssh_pass: password
   tasks:
-    - name: Checking Firewalld
-      shell: "systemctl is-active firewalld"
-      register: rst_firewalld
-      ignore_errors: True
-    - name: Checking iptables
-      shell: "systemctl is-active iptables"
-      register: rst_iptables
-      ignore_errors: True
+    # Firewalld Checking
+    - block:
+        - name: Checking Firewalld
+          shell: "systemctl is-active firewalld"
+          register: rst_firewalld
+          ignore_errors: True
+          
+        - name: Checking iptables
+          shell: "systemctl is-active iptables"
+          register: rst_iptables
+          ignore_errors: True
 
-    - debug:
-        msg: "Firewalld is not running."
-      when: rst_firewalld.stdout_lines != "active"
-      
-    - debug:
-        msg: "iptables is not running."
-      when: rst_iptables.stdout_lines != "active"
+        - debug:
+            msg: "{{ ansible_host }} - Firewalld is Running"
+          when: ('active' in rst_firewalld.stdout_lines) or ('active' in rst_iptables.stdout_lines)      
+      tags:
+        - firewalld_checking
+
+    # SELinux Checking
+    - block:
+        - name: Checking SELinux
+          shell: "getenforce"
+          register: rst_selinux
+          ignore_errors: True
+
+        - debug:
+            msg: "{{ ansible_host }} - SELinux is {{ rst_selinux.stdout_lines[0] }}"
+      tags: 
+        - selinux_checking
+
+    # TimeDate Checking
+    - block:
+        - name: Checking TimeZone
+          shell: "timedatectl"
+          register: rst_timedate
+          ignore_errors: True
+
+        - debug:
+            msg: "{{ ansible_host }} - {{ rst_timedate.stdout_lines[3] }} - {{ rst_timedate.stdout_lines[5] }}"
+      tags:
+        - timedate_checking
+    
+    # JDK Checking
+    - block:
+        - name: Checking JDK
+          shell: |
+            source /etc/profile
+            java -version
+            exit 0
+          register: rst_jdk
+          ignore_errors: true
+
+        - debug:
+            msg: "{{ ansible_host }} - {{ rst_jdk.stderr_lines[0] }}"
+      tags:
+        - jdk_checking
+
+    # THP Checking
+    - block:
+        - name: Checking THP-Enabled
+          shell: "cat /sys/kernel/mm/transparent_hugepage/enabled"
+          register: rst_thp_1
+          ignore_errors: yes
+
+        - name: Checking THP-Defrag
+          shell: "cat /sys/kernel/mm/transparent_hugepage/defrag"
+          register: rst_thp_2
+          ignore_errors: yes
+
+        - debug:
+            msg: "{{ ansible_host }} - Enabled: {{ rst_thp_1.stdout_lines[0] }} ; Defrag: {{ rst_thp_2.stdout_lines[0] }}"
+      tags:
+        - thp_checking
+          
