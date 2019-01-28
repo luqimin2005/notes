@@ -42,16 +42,16 @@ $ ./easyrsa sign-req server server
 ```
 8、创建 Diffie-Hellman
 ```
-./easyrsa gen-dh
-openvpn --genkey --secret ta.key
+$ ./easyrsa gen-dh
+$ openvpn --genkey --secret ta.key
 ```
 9、复制证书文件到 /etc/openvpn
 ```
-sudo cp pki/private/server.key /etc/openvpn/  
-sudo cp pki/ca.crt /etc/openvpn/  
-sudo cp pki/issued/server.crt /etc/openvpn/  
-sudo cp ta.key /etc/openvpn/  
-sudo cp pki/dh.pem /etc/openvpn/
+$ sudo cp pki/private/server.key /etc/openvpn/  
+$ sudo cp pki/ca.crt /etc/openvpn/  
+$ sudo cp pki/issued/server.crt /etc/openvpn/  
+$ sudo cp ta.key /etc/openvpn/  
+$ sudo cp pki/dh.pem /etc/openvpn/
 ```
 
 #### 客户端
@@ -122,10 +122,10 @@ $ sudo systemctl enable openvpn@server
 #### 配置客户端
 1、准备客户端配置文件
 ```
-mkdir -p ~/client-configs/files
-chmod 700 ~/client-configs/files
-cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/client-configs/base.conf
-vim ~/client-configs/base.conf 
+$ mkdir -p ~/client-configs/files
+$ chmod 700 ~/client-configs/files
+$ cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/client-configs/base.conf
+$ vim ~/client-configs/base.conf 
 client
 dev tun
 proto udp
@@ -148,10 +148,10 @@ key-direction 1
 ```
 2、创建客户端证书
 ```
-vim ~/client-configs/make_config.sh
-chmod 700 ~/client-configs/make_config.sh
-cd ~/client-configs
-./make_config.sh client1
+$ vim ~/client-configs/make_config.sh
+$ chmod 700 ~/client-configs/make_config.sh
+$ cd ~/client-configs
+$ ./make_config.sh client1
 ```
 3、安装客户端，并导入文件 client1.ovpn
 ```
