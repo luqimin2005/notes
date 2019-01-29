@@ -14,6 +14,7 @@ $ git clone https://github.com/OpenVPN/easy-rsa.git
 ```
 $ cd easy-rsa/easyrsa3/
 $ cp vars.example vars
+
 $ vim vars
 set_var EASYRSA_REQ_COUNTRY     "CN"
 set_var EASYRSA_REQ_PROVINCE    "GD"
@@ -84,6 +85,7 @@ net.ipv4.ip_forward = 1
 $ sudo sysctl -p
 $ sudo cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz /etc/openvpn/
 $ sudo gzip -d /etc/openvpn/server.conf.gz
+
 $ sudo vim /etc/openvpn/server.conf
 port xxxx
 proto udp
@@ -126,6 +128,7 @@ $ sudo systemctl enable openvpn@server
 $ mkdir -p ~/client-configs/files
 $ chmod 700 ~/client-configs/files
 $ cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/client-configs/base.conf
+
 $ vim ~/client-configs/base.conf 
 client
 dev tun
@@ -153,6 +156,24 @@ $ vim ~/client-configs/make_config.sh
 $ chmod 700 ~/client-configs/make_config.sh
 $ cd ~/client-configs
 $ ./make_config.sh client1
+
+$ vim ~/client-configs/make_config.sh
+#!/bin/bash
+# First argument: Client identifier
+KEY_DIR=~/client-configs/keys
+OUTPUT_DIR=~/client-configs/files
+BASE_CONFIG=~/client-configs/base.conf
+cat ${BASE_CONFIG} \
+	<(echo -e '<ca>') \
+	${KEY_DIR}/ca.crt \
+	<(echo -e '</ca>\n<cert>') \
+	${KEY_DIR}/${1}.crt \
+	<(echo -e '</cert>\n<key>') \
+	${KEY_DIR}/${1}.key \
+	<(echo -e '</key>\n<tls-auth>') \
+	${KEY_DIR}/ta.key \
+	<(echo -e '</tls-auth>') \
+	> ${OUTPUT_DIR}/${1}.ovpn
 ```
 3、安装客户端，并导入文件 client1.ovpn
 ```
