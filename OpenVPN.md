@@ -133,7 +133,7 @@ $ vim ~/client-configs/base.conf
 client
 dev tun
 proto udp
-remote hostname.domain.com port
+remote hostname.domain.com port # 修改为真实的主机名和端口
 resolv-retry infinite
 nobind
 user nobody
