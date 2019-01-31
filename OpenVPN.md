@@ -133,7 +133,7 @@ $ vim ~/client-configs/base.conf
 client
 dev tun
 proto udp
-remote ec2-3-112-1-46.ap-northeast-1.compute.amazonaws.com 4869
+remote hostname.domain.com port
 resolv-retry infinite
 nobind
 user nobody
@@ -177,5 +177,9 @@ cat ${BASE_CONFIG} \
 ```
 3、安装客户端，并导入文件 client1.ovpn
 ```
-URL: https://swupdate.openvpn.org/community/releases/openvpn-install-2.4.6-I602.exe
+Windows: https://swupdate.openvpn.org/community/releases/openvpn-install-2.4.6-I602.exe
+
+MacOS：https://tunnelblick.net/release/Tunnelblick_3.7.8_build_5180.dmg
 ```
+
+
