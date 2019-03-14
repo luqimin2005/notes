@@ -20,11 +20,11 @@
 
 ```
 - REST API  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/webhdfs`  
+Gateway:	`https://{gateway-host}:{gateway-port}/gateway/default/webhdfs`  
 Cluster:    `http://{webhdfs-host}:50070/webhdfs`  
 
 - WEB UI  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/hdfs`  
+Gateway:	`https://{gateway-host}:{gateway-port}/gateway/default/hdfs`  
 Cluster:	`http://{webhdfs-host}:50070/`  
 
 
@@ -42,13 +42,13 @@ Cluster:	`http://{webhdfs-host}:50070/`
 </property>
 ```
 - REST API  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/resourcemanager`  
-Cluster:	`http://{yarn-host}:{yarn-port}/ws}`  
+Gateway:	`https://{gateway-host}:8443/gateway/default/resourcemanager`  
+Cluster:	`http://{yarn-host}:8088/ws}`  
 
 - WEB UI  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/yarn`  
+Gateway:	`https://{gateway-host}:8443/gateway/default/yarn`  
 Cluster:	`http://{resource-manager-host}:8088/cluster`  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/jobhistory`  
+Gateway:	`https://{gateway-host}:8443/gateway/default/jobhistory`  
 Cluster:	`http://{jobhistory-host}:19888/jobhistory`  
 
 
@@ -75,8 +75,8 @@ Cluster:	`http://{jobhistory-host}:19888/jobhistory`
     <value>true</value>
 </property>
 ```
-Gateway:	`jdbc:hive2://{gateway-host}:{gateway-port}/;ssl=true;sslTrustStore={gateway-trust-store-path};trustStorePassword={gateway-trust-store-password};transportMode=http;httpPath={gateway-path}/{cluster-name}/hive`  
-Cluster:	`http://{hive-host}:{hive-port}/{hive-path}`  
+Gateway:	`jdbc:hive2://{gateway-host}:8443/;ssl=true;sslTrustStore=/var/lib/knox/data-3.0.1.0-187/security/keystores/gateway.jks;trustStorePassword=knox;transportMode=http;httpPath=gateway/default/hive`  
+Cluster:	`http://{hive-host}:10001/cliservice`  
 
 
 ### HBase/Phoenix
@@ -99,11 +99,11 @@ $ /usr/hdp/current/hbase-master/bin/hbase-daemon.sh start rest -p 60080
 ```
 
 -  REST API  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/hbase`  
+Gateway:	`https://{gateway-host}:8443/gateway/default/hbase`  
 Cluster:	`http://{hbase-rest-host}:60080/`  
 
 - WEB UI  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/hbase/webui/`  
+Gateway:	`https://{gateway-host}:8443/gateway/default/hbase/webui/`  
 Cluster:	`http://{hbase-master-host}:16010/`  
 
 - Phoenix
@@ -147,7 +147,7 @@ Gateway:  `jdbc:avatica:remote:url=https://knox_gateway.domain:8443/gateway/sand
 ### Spark/Livy
 
 - Spark UI  
-Gateway:	`https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/sparkhistory`  
+Gateway:	`https://{gateway-host}:8443/gateway/default/sparkhistory`  
 Cluster:	`http://{spark-history-host}:18081`  
 
 - Livy Session
@@ -227,11 +227,11 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
 
 <service>
     <role>NAMENODE</role>
-    <url>hdfs://localhost:8020</url>
+    <url>hdfs://sandbox-hdp:8020</url>
 </service>
 <service>
     <role>WEBHDFS</role>
-    <url>http://localhost:50070/webhdfs</url>
+    <url>http://sandbox-hdp:50070/webhdfs</url>
 </service>
 <service>
     <role>HDFSUI</role>
@@ -240,7 +240,7 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
 
 <service>
     <role>RESOURCEMANAGER</role>
-    <url>http://<hostname>:<port>/ws</url>
+    <url>http://sandbox-hdp:8088/ws</url>
 </service>
 <service>
     <role>JOBHISTORYUI</role>
@@ -253,7 +253,7 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
 
 #<service>
 #    <role>HIVE</role>
-#    <url>http://localhost:10001/cliservice</url>
+#    <url>http://sandbox-hdp:10001/cliservice</url>
 #    <param>
 #        <name>replayBufferSize</name>
 #        <value>8</value>
@@ -265,11 +265,11 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
 
 <service>
   <role>AVATICA</role>
-  <url>http://avatica:8765</url>
+  <url>http://sandbox-hdp:8765</url>
 </service>
 <service>
     <role>WEBHBASE</role>
-    <url>http://localhost:60080</url>
+    <url>http://sandbox-hdp:60080</url>
     <param>
         <name>replayBufferSize</name>
         <value>8</value>
@@ -282,7 +282,7 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
 
 <service>
   <role>LIVYSERVER</role>
-  <url>http://<livy-server>:8999</url>
+  <url>http://sandbox-hdp:8999</url>
 </service>
 <service>
     <role>SPARKHISTORYUI</role>
