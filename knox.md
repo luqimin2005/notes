@@ -151,6 +151,10 @@ Gateway:	`https://{gateway-host}:8443/gateway/default/sparkhistory`
 Cluster:	`http://{spark-history-host}:18081`  
 
 - Livy Session
+
+Gateway:    `https://{gateway-host}:8443/gateway/default/livy/v1/batches`  
+Cluster:    `http://{livy-host}:8999/batches`  
+
 ```
 $ curl -H "Content-Type: application/json" -d '{"kind": "spark"}' -X POST http://{livy-host}:8999/sessions
 $ curl -X GET http://{livy-host}:8999/sessions/0/state
@@ -170,6 +174,27 @@ $ curl -X GET http://{livy-host}:8999/batches/6/log
 $ curl -X DELETE http://{livy-host}:8999/batches/6
 
 ```
+
+### Kakfa
+
+Gateway:	`https://{gateway-host}:8443/gateway/default/kafka`  
+Cluster:	`http://{kakfa-rest-host}:{kafka-rest-port}}`  
+
+```
+# 0. Getting topic info
+
+curl -ikv -u guest:guest-password -X GET 'https://localhost:8443/gateway/sandbox/kafka/topics'
+
+# 1. Publish message to topic
+
+curl -ikv -u guest:guest-password -X POST 'https://localhost:8443/gateway/sandbox/kafka/topics/TOPIC1' -H 'Content-Type: application/vnd.kafka.json.v2+json' -H 'Accept: application/vnd.kafka.v2+json' --data '"records":[{"value":{"foo":"bar"}}]}'
+```
+
+### Oozie
+
+Gateway:    `https://{gateway-host}:8443/gateway/default/oozie`  
+Cluster:	`http://{oozie-host}:11000/oozie`
+
 
 
 ### Knox
@@ -236,6 +261,7 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
 <service>
     <role>HDFSUI</role>
     <url>http://sandbox.hortonworks.com:50070</url>
+    <version>2.7.0</version>
 </service>
 
 <service>
@@ -289,8 +315,30 @@ $ curl -X DELETE http://{livy-host}:8999/batches/6
     <url>http://sandbox.hortonworks.com:18081/</url>
 </service>
 
+#<service>
+#    <role>KAFKA</role>
+#    <url>http://sandbox-hdp:<kafka-rest-port></url>
+#</service>
 <service>
     <role>KAFKA</role>
+</service>
+
+
+<service>
+    <role>JOBTRACKER</role>
+    <url>rpc://sandbox-hdp:8050</url>
+</service>
+<service>
+    <role>OOZIE</role>
+    <url>http://sandbox-hdp:11000/oozie</url>
+    <param>
+        <name>replayBufferSize</name>
+        <value>8</value>
+    </param>
+</service>
+<service>
+    <role>OOZIEUI</role>
+    <url>http://sandbox.hortonworks.com:11000/oozie</url>
 </service>
 
 ```
