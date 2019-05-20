@@ -1,4 +1,4 @@
-## MySQL主从状态切换（Slave->Master）
+## MySQL故障切换（Slave->Master）
 
 #### 配置步骤：（Slave）
 1. 登录MySQL，并停止slave进程
