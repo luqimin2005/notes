@@ -4,10 +4,10 @@
     #### 测试环境信息：
     版本: mysql-community-server.x86_64           5.7.26-1.el7
 
-    节点 | 主机名
-    - | - | - 
-    Master | sight-2.luqimin.cn
-    Slave | sight-3.luqimin.cn
+| 节点 | 主机名 |
+| ------ | ------------------ |
+| Master | sight-2.luqimin.cn |
+| Slave  | sight-3.luqimin.cn |
 
     #### 先决条件：已配置MySQL正常运行
 
