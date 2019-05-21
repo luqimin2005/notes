@@ -212,3 +212,52 @@
     * 移除 kpropd.acl，并启动 kadmin 进程
     * 设置 cron 任务，向其他 Replica KDC 同步数据库
     * 修改 krb5.conf 文件中 [realms] 的信息，将 admin_server 指向为新 Master KDC
+
+
+### 数据库的增量同步  
+* 对于大型站点，使用数据库的增量同步，可以减少服务器和网络的压力
+* `须停止使用 xinetd 托管 kpropd 服务，停止以上步骤中的 cron 任务，增量更新必须使用 kpropd 的独立进程`
+1. 在 Master KDC 的配置文件 kdc.conf 中添加如下参数：
+    ```
+    [realms]
+      LUQIMIN.CN = {
+        ...
+        iprop_enable = true
+        iprop_port = 754
+
+        # 默认值为 1000， 最大值为 2500
+        iprop_master_ulogsize = 1000
+        # 默认值为 2分钟，1.17版本之前使用 iprop_slave_poll
+        iprop_replica_poll = 1m
+        # 默认值为 300，即 5分钟
+        iprop_resync_timeout = 300
+        ...
+    ```
+2. 为每个主机创建 kiprop 主体，并添加到 /etc/krb5.keytab
+    ```
+    # admin -p admin/admin
+    kadmin: addprinc -randkey kiprop/sight-2.luqimin.cn
+    kadmin: ktadd kiprop/sight-2.luqimin.cn
+    ```
+3. 在 Master KDC 上，添加 kadm5.acl，kiprop 须具有 p 权限
+    ```
+    */admin@LUQIMIN.CN	*
+    kiprop/sight-3.luqimin.cn@LUQIMIN.CN	p
+    kiprop/sight-2.luqimin.cn@LUQIMIN.CN	p
+    ```
+4. 重启 Master KDC 服务： krb5kdc 与 kadmin
+    ```
+    # systemctl restart krb5kdc
+    # systemctl restart kadmin
+    ```
+5. 在 Replica KDC 的配置文件 kdc.conf 中启动增量更新，并重启服务 krb5kdc
+    ```
+    # systemctl restart krb5kdc
+    ```
+6. 启动进程 kpropd，查看日志验证更新状态 /var/log/messages
+    ```
+    # kpropd
+    # tail -f /var/log/messages
+    ...
+    May 21 16:03:01 sight-2 kpropd[16546]: Incremental updates: 2 updates / 1829 us
+    ```
