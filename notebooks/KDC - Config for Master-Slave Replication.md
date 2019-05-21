@@ -142,7 +142,7 @@
     host/sight-3.luqimin.cn@LUQIMIN.CN
     host/sight-2.luqimin.cn@LUQIMIN.CN
     ```
-6. 在 Replica KDC 上，使用 xinetd 对 kpropd 服务进行托管
+6. 在 Replica KDC 上，使用 xinetd 对 kpropd 服务进行托管  
     安装 xinetd 
     ```
     # yum -y install xinetd
@@ -169,7 +169,7 @@
     # kprop -f /var/kerberos/krb5kdc/replica_datatrans sight-2.luqimin.cn
     Database propagation to kerberos-1.mit.edu: SUCCEEDED
     ```
-8. 使用脚本和cron任务，配置周期性的同步Kerberos数据库
+8. 使用脚本和cron任务，配置周期性的同步Kerberos数据库  
     创建脚本：/var/kerberos/krb5kdc/data_trans.sh
     ```
     #!/bin/sh
