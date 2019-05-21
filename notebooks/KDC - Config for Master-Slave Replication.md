@@ -233,7 +233,7 @@
         iprop_resync_timeout = 300
         ...
     ```
-2. 为每个主机创建 kiprop 主体，并添加到 /etc/krb5.keytab
+2. 为每个 KDC 主机创建 kiprop 主体，并添加到 /etc/krb5.keytab
     ```
     # admin -p admin/admin
     kadmin: addprinc -randkey kiprop/sight-2.luqimin.cn
