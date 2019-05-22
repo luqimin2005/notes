@@ -93,7 +93,7 @@
     ```
     加载 `base.ldif`
     ```
-    # ldapadd –x –D “cn=manager,dc=luqimin,dc=cn –W –f base.ldif
+    # ldapadd -x -D cn=manager,dc=luqimin,dc=cn -W -f base.ldif
     ```
 8. 验证
     ```
