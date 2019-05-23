@@ -8,12 +8,21 @@
 | BaseDN | dc=luqimin,dc=cn |
 
 #### 配置步骤
-1. 安装软件包，并启动服务
+1. 安装软件包
     ```
     # yum -y install openldap openldap-clients openldap-servers
+    ```
+2. 准备数据库配置文件，并修改配置文件的所属用户和组为 `ldap`:`ldap`
+    ```
+    # cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+    chown -R ldap:ldap /var/lib/ldap/
+    chown -R ldap:ldap /etc/openldap/
+    ```
+3. 启动服务 `slapd`
+    ```
     # systemctl start slapd
     ```
-2. 修改配置文件 `slapd.d/cn\=config/olcDatabase\=\{2\}hdb.ldif` 中 `olcSuffix`、`olcRootDN`、`olcRootPW`，配置为我们自己的域名，这里我们使用 ldif 文件修改
+4. 修改配置文件 `slapd.d/cn\=config/olcDatabase\=\{2\}hdb.ldif` 中 `olcSuffix`、`olcRootDN`、`olcRootPW`，配置为我们自己的域名，这里我们使用 ldif 文件修改
     ```
     # cat hdb_config.ldif
     dn: olcDatabase={2}hdb,cn=config
@@ -40,7 +49,7 @@
     ```
     # ldapmodify -Y EXTERNAL  -H ldapi:/// -f hdb_config.ldif
     ```
-3. 修改配置文件 `slapd.d/cn=config/olcDatabase={1}monitor.ldif` 中 `olcAccess`，配置为我们自己的名称，这里我们使用 ldif 文件进行修改
+5. 修改配置文件 `slapd.d/cn=config/olcDatabase={1}monitor.ldif` 中 `olcAccess`，配置为我们自己的名称，这里我们使用 ldif 文件进行修改
     ```
     # cat monitor_config.ldif
     dn: olcDatabase={1}monitor,cn=config
@@ -52,20 +61,15 @@
     ```
     # ldapmodify -Y EXTERNAL  -H ldapi:/// -f monitor_config.ldif
     ```
-4. 准备数据库配置文件，并修改配置文件的所属用户和组为 `ldap`:`ldap`
-    ```
-    # cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
-    chown -R ldap:ldap /var/lib/ldap/
-    chown -R ldap:ldap /etc/openldap/
-    ```
-5. 测试配置，并重启 `slapd` 服务
+
+6. 测试配置，并重启 `slapd` 服务
     ```
     # slaptest -u
     config file testing succeeded
     # systemctl restart slapd
     # systemctl enable slapd
     ```
-6. 添加 schema
+7. 添加 schema
     ```
     # cd /etc/openldap/schema/
     # ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f core.ldif
@@ -82,7 +86,7 @@
     # ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f pmi.ldif 
     # ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f ppolicy.ldif
     ```
-7. 初始化 `BaseDN`，这里我们使用 ldif 文件
+8. 初始化 `BaseDN`，这里我们使用 ldif 文件
     ```
     # cat base.ldif
     dn: dc=luqimin,dc=cn
@@ -95,7 +99,7 @@
     ```
     # ldapadd -x -D cn=manager,dc=luqimin,dc=cn -W -f base.ldif
     ```
-8. 验证
+9. 验证
     ```
     [root@sight-3 openldap]# ldapsearch -b dc=luqimin,dc=cn -D cn=manager,dc=luqimin,dc=cn -W  -LLL
     Enter LDAP Password: 
@@ -105,3 +109,7 @@
     o: describe
     dc: luqimin
     ```
+
+`注意`：  
+* 直接修改 `slapd` 的配置文件，将会导致校验和错误，如 `5ce63921 ldif_read_file: checksum error on "/etc/openldap/slapd.d/cn=config.ldif"`
+* 所有配置 `slapd` 的配置文件，都通过定义 `ldif` 文件，使用 `ldapmodify` 加载
