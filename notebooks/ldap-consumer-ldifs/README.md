@@ -1,4 +1,4 @@
-### Delta-syncrepl Provider configuration
+### Delta-syncrepl Consumer configuration
 
 ##### 修改配置
 ldapmodify -Y EXTERNAL  -H ldapi:/// -f hdb_config.ldif  
