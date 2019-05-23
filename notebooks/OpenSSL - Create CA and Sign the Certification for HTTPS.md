@@ -33,10 +33,15 @@
     ```
     # cd /etc/pki/CA/  
     # openssl x509 -req -CA certs/ca.crt -CAkey private/ca.key -CAcreateserial -days 3650 -in http.csr -out http.crt
+    Signature ok
+    subject=/C=CN/ST=GD/L=Shenzhen/O=Web/OU=Httpd Server/CN=www.luqimin.cn/emailAddress=HttpdServer
+    Getting CA Private Key
+    Enter pass phrase for private/ca.key:
     ```
 4. 验证证书
     ```
     # openssl verify -CAfile certs/ca.crt http.crt
+    http.crt: OK
     ```
 ### 配置https服务
 1. 安装 httpd 服务，以及 ssl 支持
