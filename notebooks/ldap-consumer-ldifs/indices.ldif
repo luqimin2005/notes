@@ -1,0 +1,7 @@
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: uid,displayName eq,pres,sub
+-
+add: olcDbIndex
+olcDbIndex: uidNumber,gidNumber,memberUid eq
