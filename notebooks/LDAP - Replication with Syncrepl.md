@@ -8,6 +8,7 @@
 | Ldap Consumer | sihgt-2.luqimin.cn | 
 
 ### Delta-syncrepl 配置（1/2）：Provider
+* [配置文件](https://github.com/luqimin2005/notes/tree/master/notebooks/ldap-provider-ldifs)
 1. 定义 module.ldif 文件，并加载 hdb backend、accesslog、syncprov
     ```
     # ldapsearch -LLL -Q -Y EXTERNAL -H ldapi:/// -b cn=config dn | grep module
@@ -225,8 +226,9 @@
     ```
 
 ### Delta-syncrepl 配置（2/2）：Consumer
-1. [参考文档]()在主机 sight-2.luqimin.cn 安装一个新的 Ldap 实例；  
-    [参考文档]()为此 Ldap 实例开启日志功能，并启用 TLS 加密传输
+* [配置文件](https://github.com/luqimin2005/notes/tree/master/notebooks/ldap-consumer-ldifs)
+1. [参考文档：LDAP - New OpenLdap Instance](https://github.com/luqimin2005/notes/blob/master/notebooks/LDAP%20-%20New%20OpenLdap%20Instance.md) 在主机 sight-2.luqimin.cn 安装一个新的 Ldap 实例；  
+    [参考文档：LDAP - Logging and StartTLS](https://github.com/luqimin2005/notes/blob/master/notebooks/LDAP%20-%20Logging%20and%20StartTLS.md) 为此 Ldap 实例开启日志功能，并启用 TLS 加密传输
 2. 定义 module.ldif 文件，并加载 hdb backend、syncprov
     ```
     # ldapsearch -LLL -Q -Y EXTERNAL -H ldapi:/// -b cn=config dn | grep module
