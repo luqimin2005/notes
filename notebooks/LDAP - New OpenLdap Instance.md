@@ -111,5 +111,6 @@
     ```
 
 `注意`：  
-* 直接修改 `slapd` 的配置文件，将会导致校验和错误，如 `5ce63921 ldif_read_file: checksum error on "/etc/openldap/slapd.d/cn=config.ldif"`
+* 直接修改 `slapd` 的配置文件，将会导致校验和错误，如  
+ `5ce63921 ldif_read_file: checksum error on "/etc/openldap/slapd.d/cn=config.ldif"`
 * 所有配置 `slapd` 的配置文件，都通过定义 `ldif` 文件，使用 `ldapmodify` 加载
