@@ -28,7 +28,7 @@
     # systemctl restart slapd
     ```
 ### 启用 TLS 加密
-1. 参考链接 [使用OpenSSL创建CA，并配置HTTPS](https://github.com/luqimin2005/notes/blob/master/notebooks/OpenSSL%20-%20Create%20CA%20and%20Sign%20the%20Certification%20for%20HTTPS.md), 创建 CA 证书颁发机构，并为该服务器签名证书，将 CA根证书、Ldap服务器证书、Ldap服务器私钥文件复制到目录 /etc/openldap/certs/
+1. [参考文档：OpenSSL - Create CA and Sign the Certification for HTTPS.md](https://github.com/luqimin2005/notes/blob/master/notebooks/OpenSSL%20-%20Create%20CA%20and%20Sign%20the%20Certification%20for%20HTTPS.md), 创建 CA 证书颁发机构，并为该服务器签名证书，将 CA根证书、Ldap服务器证书、Ldap服务器私钥文件复制到目录 /etc/openldap/certs/
     * ca.crt
     * sight-3.key
     * sight-3.crt
