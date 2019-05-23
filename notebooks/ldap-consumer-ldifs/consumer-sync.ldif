@@ -1,0 +1,15 @@
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: syncprov
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: entryUUID eq
+-
+add: olcSyncRepl
+olcSyncRepl: rid=0 provider=ldap://sight-3.luqimin.cn bindmethod=simple binddn="cn=replicator,dc=luqimin,dc=cn" credentials={MD5}4QrcOUm6Wau+VuBX8g+IPg== searchbase="dc=luqimin,dc=cn" logbase="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog
+-
+add: olcUpdateRef
+olcUpdateRef: ldap://sight-3.luqimin.cn

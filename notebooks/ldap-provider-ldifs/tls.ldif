@@ -1,0 +1,23 @@
+dn: cn=config
+changetype: modify
+delete: olcTLSCACertificatePath
+
+dn: cn=config
+changetype: modify
+add: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/openldap/certs/ca.crt
+
+dn: cn=config
+changetype: modify
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/sight-3.crt
+
+dn: cn=config
+changetype: modify
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/certs/sight-3.key
+
+dn: cn=config
+changetype: modify
+add: olcTLSVerifyClient
+olcTLSVerifyClient: never

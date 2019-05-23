@@ -1,0 +1,7 @@
+dn: cn=module{0},cn=config
+objectClass: olcModuleList
+cn: module{0}
+olcModulePath: /usr/lib64/openldap
+olcModuleLoad: {0}back_hdb
+olcModuleLoad: {1}accesslog.la
+olcModuleLoad: {2}syncprov.la
