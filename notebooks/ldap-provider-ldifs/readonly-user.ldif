@@ -1,0 +1,6 @@
+dn: cn=readonly-user,ou=users,dc=luqimin,dc=cn
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: readonly-user
+description: OpenLDAP ReadOnly User
+userPassword: {MD5}4QrcOUm6Wau+VuBX8g+IPg==

@@ -1,0 +1,16 @@
+dn: olcDatabase={3}hdb,cn=config
+changetype: modify
+delete: olcAccess
+olcAccess: {0}
+-
+add: olcAccess
+olcAccess: {0}to * by dn="cn=manager,dc=luqimin,dc=cn" write by dn="cn=replicator,dc=luqimin,dc=cn" read by anonymous auth by * none
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+delete: olcAccess
+olcAccess: {2}
+-
+add: olcAccess
+olcAccess: {2}to * by dn="cn=manager,dc=luqimin,dc=cn" write by dn="cn=readonly,ou=users,dc=luqimin,dc=cn" read by dn="cn=replicator,dc=luqimin,dc=cn" read by anonymous auth by * none
+

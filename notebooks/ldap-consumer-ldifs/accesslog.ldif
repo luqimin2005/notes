@@ -1,0 +1,10 @@
+dn: olcDatabase=hdb,cn=config
+changetype: add
+objectClass: olcDatabaseConfig
+objectClass: olcHdbConfig
+olcDatabase: hdb
+olcDbDirectory: /var/lib/ldap/accesslog
+olcSuffix: cn=accesslog
+olcRootDN: cn=manager,dc=luqimin,dc=cn
+olcDbIndex: default eq
+olcDbIndex: entryCSN,objectClass,reqEnd,reqResult,reqStart

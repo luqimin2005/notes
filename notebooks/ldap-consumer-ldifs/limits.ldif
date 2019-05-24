@@ -1,0 +1,9 @@
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcLimits
+olcLimits: dn.exact="cn=replication,dc=luqimin,dc=cn" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+
+dn: olcDatabase={3}hdb,cn=config
+changetype: modify
+add: olcLimits
+olcLimits: dn.exact="cn=replication,dc=luqimin,dc=cn" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited

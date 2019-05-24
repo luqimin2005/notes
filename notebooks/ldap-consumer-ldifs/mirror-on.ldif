@@ -1,0 +1,6 @@
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+delete: olcUpdateRef
+-
+add: olcMirrorMode
+olcMirrorMode: TRUE

@@ -1,0 +1,3 @@
+dn: olcDatabase={2}hdb,cn=config
+add: olcDbIndex
+olcDbIndex: krbPrincipalName eq,pres,sub

@@ -1,0 +1,7 @@
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcSyncRepl
+olcSyncRepl: rid=0 provider=ldap://sight-2.luqimin.cn bindmethod=simple binddn="cn=replicator,dc=luqimin,dc=cn" credentials=123456 searchbase="dc=luqimin,dc=cn" logbase="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog starttls=critical tls_reqcert=demand
+-
+add: olcMirrorMode
+olcMirrorMode: TRUE
