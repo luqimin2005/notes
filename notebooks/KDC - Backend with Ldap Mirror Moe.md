@@ -96,69 +96,69 @@
     为了简单，我们直接绑定"cn=manager,dc=luqimin,dc=cn"连接 Ldap
     ```
     [kdcdefaults]
-    kdc_ports = 88
-    kdc_tcp_ports = 88
+      kdc_ports = 88
+      kdc_tcp_ports = 88
 
     [realms]
-    LUQIMIN.CN = {
-    master_key_type = aes256-cts
-    kadmind_port = 749
-    max_life = 12h
-    max_renewable_life = 7d
-    acl_file = /var/kerberos/krb5kdc/kadm5.acl
-    key_stash_file = /var/kerberos/krb5kdc/.k5.LUQIMIN.CN
-    dict_file = /usr/share/dict/words
-    admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
-    supported_enctypes = aes256-cts:normal aes128-cts:normal
-    database_module = openldap
-    }
+      LUQIMIN.CN = {
+        master_key_type = aes256-cts
+        kadmind_port = 749
+        max_life = 12h
+        max_renewable_life = 7d
+        acl_file = /var/kerberos/krb5kdc/kadm5.acl
+        key_stash_file = /var/kerberos/krb5kdc/.k5.LUQIMIN.CN
+        dict_file = /usr/share/dict/words
+        admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+        supported_enctypes = aes256-cts:normal aes128-cts:normal
+        database_module = openldap
+      }
 
     [dbmodules]
-    openldap = {
-    db_library = kldap
-    db_module_dir = /usr/lib64/krb5/plugins/kdb/
-    ldap_kerberos_container_dn = "cn=krbcontainer,dc=luqimin,dc=cn"
-    ldap_kdc_dn = "cn=manager,dc=luqimin,dc=cn"
-    ldap_kadmind_dn = "cn=manager,dc=luqimin,dc=cn"
-    ldap_service_password_file = /etc/krb5.d/service.keyfile
-    ldap_servers = ldapi:///
-    ldap_conns_per_server = 5
-    }
+      openldap = {
+        db_library = kldap
+        db_module_dir = /usr/lib64/krb5/plugins/kdb/
+        ldap_kerberos_container_dn = "cn=krbcontainer,dc=luqimin,dc=cn"
+        ldap_kdc_dn = "cn=manager,dc=luqimin,dc=cn"
+        ldap_kadmind_dn = "cn=manager,dc=luqimin,dc=cn"
+        ldap_service_password_file = /etc/krb5.d/service.keyfile
+        ldap_servers = ldapi:///
+        ldap_conns_per_server = 5
+      }
 
     [logging]
-    kdc = FILE:/var/log/krb5kdc.log
-    admin_server = FILE:/var/log/kadmind.log
-    default = FILE:/var/log/krb5lib.log
+        kdc = FILE:/var/log/krb5kdc.log
+        admin_server = FILE:/var/log/kadmind.log
+        default = FILE:/var/log/krb5lib.log
 
     ```
 6. 定义 /etc/krb5.conf ，没有特殊修改
     ```
     [libdefaults]
-    renew_lifetime = 7d
-    forwardable = true
-    default_realm = LUQIMIN.CN
-    ticket_lifetime = 24h
-    dns_lookup_realm = false
-    dns_lookup_kdc = false
-    default_ccache_name = /tmp/krb5cc_%{uid}
-    #default_tgs_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
-    #default_tkt_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
+      renew_lifetime = 7d
+      forwardable = true
+      default_realm = LUQIMIN.CN
+      ticket_lifetime = 24h
+      dns_lookup_realm = false
+      dns_lookup_kdc = false
+      default_ccache_name = /tmp/krb5cc_%{uid}
+      #default_tgs_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
+      #default_tkt_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
 
     [domain_realm]
-    .luqimin.cn = LUQIMIN.CN
-    luqimin.cn = LUQIMIN.CN
+      .luqimin.cn = LUQIMIN.CN
+      luqimin.cn = LUQIMIN.CN
 
     [logging]
-    default = FILE:/var/log/krb5kdc.log
-    admin_server = FILE:/var/log/kadmind.log
-    kdc = FILE:/var/log/krb5kdc.log
+      default = FILE:/var/log/krb5kdc.log
+      admin_server = FILE:/var/log/kadmind.log
+      kdc = FILE:/var/log/krb5kdc.log
 
     [realms]
-    LUQIMIN.CN = {
+      LUQIMIN.CN = {
         admin_server = sight-3.luqimin.cn
         kdc = sight-3.luqimin.cn
         kdc = sight-2.luqimin.cn
-    }
+      }
 
     ```
 7. 准备 Kerberos 数据库（仅在一台上执行），并将生成的 key_stash 文件 .k5.LUQIMIN.CN 复制到另一台 Kdc 
