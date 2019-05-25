@@ -1,0 +1,92 @@
+# slapd config for mirror mode
+# usage: ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f mirror.ldif
+# defined serverId
+dn: cn=config
+changetype: modify
+add: olcServerID
+olcServerID: 1
+
+# defined cn=module,cn=config, load back_hdb/accesslog/syncprov
+dn: cn=module,cn=config
+changetype: add
+objectClass: olcModuleList
+cn: module{0}
+olcModulePath: /usr/lib64/openldap
+olcModuleLoad: {0}back_hdb
+olcModuleLoad: {1}accesslog.la
+olcModuleLoad: {2}syncprov.la
+
+# configurate accesslog database
+dn: olcDatabase=hdb,cn=config
+changetype: add
+objectClass: olcDatabaseConfig
+objectClass: olcHdbConfig
+olcDatabase: hdb
+olcDbDirectory: /var/lib/ldap/accesslog
+olcSuffix: cn=accesslog
+olcRootDN: cn=manager,dc=luqimin,dc=cn
+olcDbIndex: default eq
+olcDbIndex: entryCSN,objectClass,reqEnd,reqResult,reqStart
+
+# defined syncprov overlay for accesslog database
+dn: olcOverlay=syncprov,olcDatabase={3}hdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+olcSpNoPresent: TRUE
+olcSpReloadHint: TRUE
+
+# defined syncprov overlay for primary database
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: entryCSN eq
+-
+add: olcDbIndex
+olcDbIndex: entryUUID eq
+
+dn: olcOverlay=syncprov,olcDatabase={2}hdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+olcSpCheckPoint: 500 15
+
+dn: olcOverlay=accesslog,olcDatabase={2}hdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcAccessLogConfig
+olcOverlay: accesslog
+olcAccessLogDB: cn=accesslog
+olcAccessLogOps: writes
+olcAccessLogPurge: 7+00:00 1+00:00
+olcAccessLogSuccess: TRUE
+
+# defined acls for replicate user - cn=replicator,dc=luqimin,dc=cn
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to attrs=userPassword,shadowLastChange by dn="cn=manager,dc=luqimin,dc=cn" write by self write by anonymous auth by * none
+olcAccess: {1}to dn.base="" by anonymous auth by * none
+olcAccess: {2}to * by dn="cn=manager,dc=luqimin,dc=cn" write by dn="cn=readonly-user,ou=users,dc=luqimin,dc=com" read by dn="cn=replicator,dc=luqimin,dc=cn" read by anonymous auth by * none
+-
+add: olcLimits
+olcLimits: dn.exact="cn=replicator,dc=luqimin,dc=cn" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+
+dn: olcDatabase={3}hdb,cn=config
+changetype: modify
+add: olcAccess
+olcAccess: {0}to * by dn="cn=manager,dc=luqimin,dc=cn" write by dn="cn=replicator,dc=luqimin,dc=cn" read by anonymous auth by * none
+-
+add: olcLimits
+olcLimits: dn.exact="cn=replicator,dc=luqimin,dc=cn" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+
+# defined consumer sync and enable mirror mode
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcSyncRepl
+olcSyncRepl: rid=0 provider=ldap://sight-2.luqimin.cn bindmethod=simple binddn="cn=replicator,dc=luqimin,dc=cn" credentials=123456 searchbase="dc=luqimin,dc=cn" logbase="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog starttls=critical tls_reqcert=demand
+-
+add: olcMirrorMode
+olcMirrorMode: TRUE

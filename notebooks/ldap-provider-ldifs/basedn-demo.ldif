@@ -1,0 +1,30 @@
+# slapd baseDN, ou, user defined
+# Usage: ldapadd -x -D cn=manager,dc=luqimin,dc=cn -W -f basedn.ldif
+# defined baseDN
+dn: dc=luqimin,dc=cn
+objectclass: dcObject
+objectclass: organization
+o: describe
+dc: luqimin
+
+# defined replication user
+dn: cn=replicator,dc=luqimin,dc=cn
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: replicator
+description: OpenLDAP Replication User
+userPassword: {MD5}4QrcOUm6Wau+VuBX8g+IPg==
+
+# ou defined demo
+dn: ou=users,dc=luqimin,dc=cn
+objectClass:
+
+dn: ou=groupss,dc=luqimin,dc=cn
+
+# defined readonly user for ldap
+dn: cn=readonly-user,ou=users,dc=luqimin,dc=cn
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: readonly-user
+description: OpenLDAP ReadOnly User
+userPassword: {MD5}4QrcOUm6Wau+VuBX8g+IPg==
