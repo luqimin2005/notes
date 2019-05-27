@@ -9,17 +9,16 @@
 #                     -p password
 
 function usage(){
-    echo ""
-    echo "Usage: ./install.sh -d example.com -m master.example.com -r replica.example.com -a manager -p password"
-    echo "Options:"
-    echo "        -d: domain name"
-    echo "        -m: hostname of the server"
-    echo "        -r: hostname of the replica"
-    echo "        -a: ldap admin dn name"
-    echo "        -p: ldap admin password"
+    echo -e "\nUsage: ./install.sh -d example.com -m master.example.com -r replica.example.com -a manager -p password"
+    echo -e "Options:"
+    echo -e "        -d: domain name"
+    echo -e "        -m: hostname of the server"
+    echo -e "        -r: hostname of the replica"
+    echo -e "        -a: ldap admin dn name"
+    echo -e "        -p: ldap admin password"
 }
 
-while getopts d:m:s:a:p: opt; do
+while getopts d:m:r:a:p: opt; do
     case $opt in
         d)
             DOMAIN=$OPTARG
@@ -37,7 +36,7 @@ while getopts d:m:s:a:p: opt; do
             PASSWORD=$OPTARG
             ;;
         \?)
-            echo "ERROR: UNKNOW OPTION: $opt"
+            echo -e "\033[31mERROR: UNKNOW OPTION: $opt\033[0m"
             usage
             exit 110
             ;;
@@ -45,10 +44,11 @@ while getopts d:m:s:a:p: opt; do
 done
 
 if [ $DOMAIN ] && [ $MASTER ] && [ $REPLICA ] && [ $ADMIN ] && [ $PASSWORD ]; then
-    echo "INFO: OpenLdap instance installation beginning..."
+    echo -e "\033[32mINFO: OpenLdap instance installation beginning...\033[0m"
 else
-    echo "ERROR: One or more options not found, please check..."
+    echo -e "\033[31mERROR: One or more options not found, please check...\033[0m"
     usage
+    exit 110
 fi
 
 # DOMAIN   =  luqimin.cn
@@ -60,10 +60,10 @@ fi
 BASE_DN="dc="${DOMAIN//./,dc=}
 ROOT_DN="cn=$ADMIN,$BASE_DN"
 
-echo "##### Install packages for openldap and mit kdc #####"
+echo -e "\033[33m\n##### Install packages for openldap and mit kdc #####\033[0m"
 yum -y install openldap openldap-clients openldap-servers krb5-server krb5-server-ldap krb5-workstation
 
-echo "##### Initialize configurations and start service #####"
+echo -e "\033[33m\n##### Initialize configurations and start service #####\033[0m"
 mkdir /var/lib/ldap/accesslog
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/accesslog/DB_CONFIG
@@ -105,9 +105,8 @@ ldapmodify -Y EXTERNAL  -H ldapi:/// -f ldifs/openldap-init.ldif
 # 测试配置文件，并重启服务
 slaptest -u
 systemctl restart slapd
-systemctl enable slapd
 
-echo "##### Loading baseDN and requied accounts #####"
+echo -e "\033[33m\n##### Loading baseDN and requied accounts #####\033[0m"
 # ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f /etc/openldap/schema/core.ldif
 ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f /etc/openldap/schema/cosine.ldif
 ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f /etc/openldap/schema/nis.ldif
@@ -131,7 +130,7 @@ dn: $BASE_DN
 objectclass: dcObject
 objectclass: organization
 o: describe
-dc: $(echo $DOMAIN | cut -d . f1)
+dc: $(echo $DOMAIN | cut -d . -f1)
 
 # defined replication user
 dn: cn=replicator,$BASE_DN
@@ -147,24 +146,16 @@ objectClass: top
 objectClass: organizationalUnit
 ou: users
 
-dn: ou=groupss,$BASE_DN
+dn: ou=groups,$BASE_DN
 objectClass: top
 objectClass: organizationalUnit
 ou: groups
-
-# defined readonly user for ldap
-dn: cn=readonly-user,ou=users,$BASE_DN
-objectClass: simpleSecurityObject
-objectClass: organizationalRole
-cn: readonly-user
-description: OpenLDAP ReadOnly User
-userPassword: $(slappasswd -h {MD5} -s $DEFAULT_PASSWORD)
 EOF
 
-ldapadd -x -D $ROOT_DN -w $ROOT_PW -f ldifs/basedn.ldif
+ldapadd -x -D $ROOT_DN -w $PASSWORD -f ldifs/basedn.ldif
 
 # 启用日志功能
-echo "##### Enable logging for slapd ######"
+echo -e "\033[33m\n##### Enable logging for slapd ######\033[0m"
 cat > ldifs/log.ldif <<EOF
 dn: cn=config
 changetype: modify
@@ -179,13 +170,66 @@ echo "local4.*          /var/log/openldap.log" >> /etc/rsyslog.conf
 
 systemctl restart rsyslog
 systemctl restart slapd
+echo -e "\033[32m\nService slapd started.\033[0m"
 
 # 安装CA，并签署证书
-# echo "##### Configurate CA and enable TLS for slapd #####"
+echo -e "\033[33m\n##### Configurate CA and enable TLS for slapd #####\033[0m"
+# 生成CA私钥，及CA根证书
+openssl genrsa -out /etc/pki/CA/private/ca.key 4096
+chmod 400 /etc/pki/CA/private/ca.key
+openssl req -new -x509 -days 1068 -extensions v3_ca -key /etc/pki/CA/private/ca.key -out /etc/pki/CA/certs/ca.crt -subj /C=CN/ST=GD/L=SZ/O=Ldap\ Services/OU=CA/CN=LDAP\ Root\ CA/emailAddress=ldap@$DOMAIN
+
+# 生成 Ldap Master 私钥，及签名证书
+openssl genrsa -out /etc/pki/CA/$MASTER.key 2048
+openssl req -new -sha256 -key /etc/pki/CA/$MASTER.key -out /etc/pki/CA/$MASTER.csr -subj /C=CN/ST=GD/L=SZ/O=Ldap\ Services/OU=LDAP/CN=$MASTER/emailAddress=ldap@$DOMAIN
+openssl x509 -req -CA /etc/pki/CA/certs/ca.crt -CAkey /etc/pki/CA/private/ca.key -CAcreateserial -days 365 -in /etc/pki/CA/$MASTER.csr -out /etc/pki/CA/$MASTER.crt
+# 生成 Ldap Replica 私钥，及签名证书
+openssl genrsa -out /etc/pki/CA/$REPLICA.key 2048
+openssl req -new -sha256 -key /etc/pki/CA/$REPLICA.key -out /etc/pki/CA/$REPLICA.csr -subj /C=CN/ST=GD/L=SZ/O=Ldap\ Services/OU=LDAP/CN=$REPLICA/emailAddress=ldap@$DOMAIN
+openssl x509 -req -CA /etc/pki/CA/certs/ca.crt -CAkey /etc/pki/CA/private/ca.key -CAcreateserial -days 365 -in /etc/pki/CA/$REPLICA.csr -out /etc/pki/CA/$REPLICA.crt
+
+cp /etc/pki/CA/certs/ca.crt /etc/pki/CA/$MASTER.*  /etc/openldap/certs
+# tar -czf $REPLICA.pre /etc/pki/CA/certs/ca.crt /etc/pki/CA/$REPLICA.*
+chown -R ldap:ldap /etc/openldap/certs
+
+# scp /etc/pki/CA/$REPLICA.tar.gz $REPLICA:~/
+# tar -xzf /etc/pki/CA/$REPLICA.pre -C /etc/openldap/certs
+cat > ldifs/tls.ldif <<EOF
+dn: cn=config
+changetype: modify
+delete: olcTLSCACertificatePath
+
+dn: cn=config
+changetype: modify
+add: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/openldap/certs/ca.crt
+
+dn: cn=config
+changetype: modify
+delete: olcTLSCertificateFile
+-
+add: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/$MASTER.crt
+
+dn: cn=config
+changetype: modify
+delete: olcTLSCertificateKeyFile
+-
+add: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/certs/$MASTER.key
+
+dn: cn=config
+changetype: modify
+add: olcTLSVerifyClient
+olcTLSVerifyClient: never
+EOF
+
+ldapmodify -Y external -H ldapi:/// -f ldifs/tls.ldif
 
 
 
-# 加载镜像模式配置文件
+# 加载镜像模式配置文件，ServerID=1
+echo -e "\033[33m\n##### Loading mirror mode configurations ######\033[0m"
 # cp -f mirror-demo.ldif ldifs/mirrot.ldif
 cat > ldifs/mirror.ldif <<EOF
 # defined serverId
@@ -271,18 +315,135 @@ add: olcLimits
 olcLimits: dn.exact="cn=replicator,$BASE_DN" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 
 # defined consumer sync and enable mirror mode
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcSyncRepl
-olcSyncRepl: rid=0 provider=ldap://$REPLICA bindmethod=simple binddn="cn=replicator,$BASE_DN" credentials=$DEFAULT_PASSWORD searchbase="$BASE_DN" logbase="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog starttls=critical tls_reqcert=demand
--
-add: olcMirrorMode
-olcMirrorMode: TRUE
+# dn: olcDatabase={2}hdb,cn=config
+# changetype: modify
+# add: olcSyncRepl
+# olcSyncRepl: rid=0 provider=ldap://$REPLICA bindmethod=simple binddn="cn=replicator,$BASE_DN" credentials=$DEFAULT_PASSWORD searchbase="$BASE_DN" logbase="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog starttls=critical tls_reqcert=demand
+# -
+# add: olcMirrorMode
+# olcMirrorMode: TRUE
 EOF
 
 ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f ldifs/mirror.ldif
 
+# 配置Kdc集成Ldap
+echo -e "\033[33m##### Configurate KDC with OpenLdap Back-end #####\033[0m"
 
-echo "##### Configurate KDC with OpenLdap Back-end #####"
 
+cp /usr/share/doc/krb5-server-ldap-*/kerberos.schema ./
+echo "include kerberos.schema" > kerberos.conf
+slaptest -f kerberos.conf -F ldifs/
+
+#cat ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i 's/dn: cn={0}kerberos/dn: cn=kerberos,cn=schema,cn=config/g' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i 's/cn: {0}kerberos/cn: kerberos/g' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/structuralObjectClass/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/entryUUID/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/creatorsName/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/createTimestamp/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/entryCSN/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/modifiersName/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+sed -i '/modifyTimestamp/d' ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif
+
+ldapadd -Y EXTERNAL -H ldapi:/// -f  ldifs/cn\=config/cn\=schema/cn\=\{0\}kerberos.ldif 
+
+cat > ldifs/krb5-index.ldif <<EOF
+dn: olcDatabase={2}hdb,cn=config
+add: olcDbIndex
+olcDbIndex: krbPrincipalName eq,pres,sub
+EOF
+ldapmodify -Y EXTERNAL  -H ldapi:/// -f ldifs/krb5-index.ldif
+
+REALM=$(echo $DOMAIN | tr 'a-z' 'A-Z')
+mkdir /etc/krb5.d/
+mv /var/kerberos/krb5kdc/kdc.conf /var/kerberos/krb5kdc/kdc.conf.bak
+mv /etc/krb5.conf /etc/krb5.conf.bak
+
+cat > /var/kerberos/krb5kdc/kdc.conf <<EOF
+[kdcdefaults]
+  kdc_ports = 88
+  kdc_tcp_ports = 88
+
+[realms]
+  $REALM = {
+    master_key_type = aes256-cts
+    kadmind_port = 749
+    max_life = 12h
+    max_renewable_life = 7d
+    acl_file = /var/kerberos/krb5kdc/kadm5.acl
+    key_stash_file = /var/kerberos/krb5kdc/.k5.$REALM
+    dict_file = /usr/share/dict/words
+    admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+    supported_enctypes = aes256-cts:normal aes128-cts:normal
+    database_module = openldap
+  }
+
+[dbmodules]
+  openldap = {
+    db_library = kldap
+    db_module_dir = /usr/lib64/krb5/plugins/kdb/
+    ldap_kerberos_container_dn = "cn=krbcontainer,$BASE_DN"
+    ldap_kdc_dn = "$ROOT_DN"
+    ldap_kadmind_dn = "$ROOT_DN"
+    ldap_service_password_file = /etc/krb5.d/service.keyfile
+    ldap_servers = ldapi:///
+    ldap_conns_per_server = 5
+  }
+
+[logging]
+    kdc = FILE:/var/log/krb5kdc.log
+    admin_server = FILE:/var/log/kadmind.log
+    default = FILE:/var/log/krb5lib.log
+EOF
+
+cat > /etc/krb5.conf <<EOF
+[libdefaults]
+  renew_lifetime = 7d
+  forwardable = true
+  default_realm = $REALM
+  ticket_lifetime = 24h
+  dns_lookup_realm = false
+  dns_lookup_kdc = false
+  default_ccache_name = /tmp/krb5cc_%{uid}
+  #default_tgs_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
+  #default_tkt_enctypes = aes des3-cbc-sha1 rc4 des-cbc-md5
+
+[domain_realm]
+  .$DOMAIN = $REALM
+  $DOMAIN = $REALM
+
+[logging]
+  default = FILE:/var/log/krb5kdc.log
+  admin_server = FILE:/var/log/kadmind.log
+  kdc = FILE:/var/log/krb5kdc.log
+
+[realms]
+  $REALM = {
+    admin_server = $MASTER
+    kdc = $MASTER
+    kdc = $REPLICA
+  }
+EOF
+
+cat > /var/kerberos/krb5kdc/kadm5.acl <<EOF
+*/admin@$REALM        *
+EOF
+
+kdb5_ldap_util -D $ROOT_DN -w $PASSWORD -H ldapi:/// create -r $REALM -s -P $PASSWORD
+
+# kdb5_ldap_util -D cn=admin,dc=luqimin,dc=com -w password -H ldapi:/// stashsrvpw -f /etc/krb5.d/service.keyfile cn=admin,dc=luqimin,dc=com
+# kdb5_ldap_util -D $ROOT_DN -w $PASSWORD -H ldapi:/// stashsrvpw -f /etc/krb5.d/service.keyfile $ROOT_DN
+# expect "$ROOT_DN":"
+# send "$PASSWORD\r"
+
+tar -czf $REPLICA.pre /etc/pki/CA/certs/ca.crt /etc/pki/CA/$REPLICA.key /etc/pki/CA/$REPLICA.crt /etc/krb5.conf /var/kerberos/krb5kdc/kdc.conf /var/kerberos/krb5kdc/.k5.$REALM /var/kerberos/krb5kdc/kadm5.acl
+
+systemctl restart slapd
+systemctl start krb5kdc
+systemctl start kadmin
+systemctl enable slapd
+systemctl enable krb5kdc
+systemctl enable kadmin
+
+echo -e "\033[32mPlease transfer $REPLICA.pre to the directory of replica server where script is running.\033[0m"
 
