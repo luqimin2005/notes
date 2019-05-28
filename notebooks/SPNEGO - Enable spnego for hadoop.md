@@ -10,7 +10,7 @@
     # chown hdfs:hadoop /etc/security/http_secret
     # chmod 440 /etc/security/http_secret
     ```
-3. 修改属性 core-site.xml  
+3. 修改属性 `core-site.xml`
 
     | 属性 | 值 |
     | --- | --- |
@@ -25,8 +25,7 @@
 ### 客户端配置
 1. 下载安装 [MIT Kerberos for Windows 4.1](http://web.mit.edu/kerberos/dist/#kfw-4.1)
 
-2. 修改配置文件：C:\ProgramData\MIT\Kerberos5\krb5.ini  
-复制 /etc/krb5.conf 的内容（logging除外）到 krb5.ini ，如
+2. 修改配置文件：C:\ProgramData\MIT\Kerberos5\krb5.ini，复制 /etc/krb5.conf 的内容（logging除外）到 `krb5.ini` ，如
     ```
     [libdefaults]
     renew_lifetime = 7d
@@ -50,7 +49,7 @@
         kdc = sight-2.luqimin.cn
     }
     ```
-3. 修改环境变量，确保 C:\Program Files\MIT\Kerberos\bin 在最前面，如
+3. 修改环境变量，确保 `C:\Program Files\MIT\Kerberos\bin` 在 java 前面，如
     ![avatar](images/kerberos_client_win_path.png)
 
 4. 使用 firefox，打开配置页面 `about:conifg`，修改如下参数：
