@@ -1,0 +1,41 @@
+authconfig --enablesssd --enablesssdauth --enablerfc2307bis --enableldap --enableldapauth --disableforcelegacy --enableldaptls --disablekrb5 --ldapserver ldap://sight-3.luqimin.cn --ldapbasedn "dc=luqimin,dc=cn" --enablemkhomedir --update
+
+
+
+[sssd]
+config_file_version = 2
+services = nss, pam
+domains = LDAP
+
+[domain/LDAP]
+debug_level = 7
+enumerate = True
+cache_credentials = false
+ldap_schema = rfc2307
+id_provider = ldap
+auth_provider = ldap
+chpass_provider = ldap
+access_provider = ldap
+min_id = 1500
+
+ldap_uri = ldap://sight-3.luqimin.cn:389
+ldap_tls_reqcert = never
+ldap_tls_cacert = /etc/openldap/certs/ca.crt
+ldap_search_base = dc=luqimin,dc=cn
+ldap_access_filter = (&(objectclass=posixAccount))
+ldap_default_bind_dn = cn=manager,dc=luqimin,dc=cn
+ldap_default_authtok_type = password
+ldap_default_authtok = admin
+
+ldap_user_object_class = posixAccount
+ldap_user_name = uid
+ldap_user_uid_number = uidNumber
+ldap_user_gid_number = gidNumber
+ldap_group_name = cn
+ldap_group_object_class = posixGroup
+ldap_group_gid_number = gidNumber
+
+[nss]
+debug_level = 7
+override_homedir = /home/%u
+override_shell = /bin/bash
