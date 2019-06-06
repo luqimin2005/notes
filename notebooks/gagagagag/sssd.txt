@@ -13,19 +13,25 @@ enumerate = True
 cache_credentials = false
 ldap_schema = rfc2307
 id_provider = ldap
-auth_provider = ldap
-chpass_provider = ldap
-access_provider = ldap
+auth_provider = krb5
+krb5_server = sight-3.luqimin.cn
+krb5_backup_server = sight-2.luqimin.cn
+krb5_passwd = sight-3.luqimin.cn
+krb5_realm = LUQIMIN.CN
+#auth_provider = ldap
+#chpass_provider = ldap
+#access_provider = ldap
 min_id = 1500
 
 ldap_uri = ldap://sight-3.luqimin.cn:389
+ldap_id_use_start_tls = true
 ldap_tls_reqcert = never
 ldap_tls_cacert = /etc/openldap/certs/ca.crt
 ldap_search_base = dc=luqimin,dc=cn
 ldap_access_filter = (&(objectclass=posixAccount))
-ldap_default_bind_dn = cn=manager,dc=luqimin,dc=cn
+ldap_default_bind_dn = cn=replicator,dc=luqimin,dc=cn
 ldap_default_authtok_type = password
-ldap_default_authtok = admin
+ldap_default_authtok = 123456
 
 ldap_user_object_class = posixAccount
 ldap_user_name = uid
