@@ -115,14 +115,12 @@
     NOTICE: no policy specified for "host/sight-2.luqimin.cn@LUQIMIN.CN"; assigning "default"
     Principal "host/sight-2.luqimin.cn@LUQIMIN.CN" created.
     ```
-3. 为这些主机Principal生成keytab文件，并安装至 /etc/krb5.keytab
+3. 分别在Master和Slave主机上为这些Principal生成keytab文件，并安装至 /etc/krb5.keytab
     ```
     # kadmin -p admin/admin@LUQIMIN.CN
-    kadmin: ktadd -k /tmp/sight-3.keytab host/sight-3.luqimin.cn
-    kadmin: ktadd -k /tmp/sight-2.keytab host/sight-2.luqimin.cn
+    kadmin: ktadd -k /etc/krb5.keytab host/sight-3.luqimin.cn
+    kadmin: ktadd -k /etc/krb5.keytab host/sight-2.luqimin.cn
     kadmin: q
-    # cp /tmp/sight-3.keytab /etc/krb5.keytab
-    # scp /tmp/sight-2.keytab /etc/krb5.keytab
     ```
 4. 同步配置文件  
     主从复制仅同步数据库文件，并不同步配置文件，我们需要手工复制 Master KDC 的配置文件到 Replica KDC:
