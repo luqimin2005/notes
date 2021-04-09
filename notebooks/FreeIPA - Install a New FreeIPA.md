@@ -22,6 +22,10 @@ yum -y install ipa-server ipa-server-dns
 ```
 3. 准备参数配置 ipa-server
 ```
-ipa-server-install --domain=luqimin.cn --realm=LUQIMIN.CN --ds-password=Cloudera4u --admin-password=Cloudera4u --hostname=ipa1.luqimin.cn --ip-address=172.17.2.51 --idstart=5000 --idmax=15000 --mkhomedir --setup-dns --no-forwarders --no-reverse --no-ntp
+ipa-server-install --domain=luqimin.cn --realm=LUQIMIN.CN \
+--ds-password=Cloudera4u --admin-password=Cloudera4u \
+--hostname=ipa1.luqimin.cn --ip-address=172.17.2.51 \
+--idstart=5000 --idmax=15000 --mkhomedir \
+--setup-dns --no-forwarders --no-reverse --no-ntp
 ```
 4. 
