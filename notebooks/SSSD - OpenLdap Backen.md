@@ -1,7 +1,7 @@
-## 配置 sssd 集成 openldap 进行 ssh 认证
+## 配置 SSSD 集成 OpenLdap 进行 SSH 认证
 
 ### 测试环境
-* ldapserver: hadoop03.cdp.luqimin.cn
+* LdapServer: hadoop03.cdp.luqimin.cn
 
 ### 配置步骤：
 1. 安装依赖包
@@ -10,8 +10,12 @@ yum install sssd sssd-ldap openldap-clients oddjob-mkhomedir
 ```
 2. 运行配置命令，启动 sssd 并集成 ldapauth
 ```
-authconfig --enablesssd --enablesssdauth --enablerfc2307bis --enableldap --enableldapauth --disableforcelegacy --disableldaptls --disablekrb5 --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" --enablemkhomedir --updateall
+authconfig --enablesssd --enablesssdauth --enablerfc2307bis --disableforcelegacy \
+           --enableldap --enableldapauth --disableldaptls --disablekrb5 
+           --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" \
+           --enablemkhomedir --updateall
 ```
+以上命令会自动修改 sssd.conf system-auth password-auth ldap.conf 等配置文件，并自动重启 sssd oddjobd sshd 等服务
 3. 修改配置文件 /etc/sssd/sssd.conf
 ```
 # 由于没有配置证书，注释这一行，并添加 ldap_tls_reqcert = never
