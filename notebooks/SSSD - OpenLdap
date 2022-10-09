@@ -1,0 +1,51 @@
+
+
+ldapserver: hadoop03.cdp.luqimin.cn
+
+
+yum install sssd sssd-ldap openldap-clients oddjob-mkhomedir
+
+authconfig --enablesssd --enablesssdauth --enablerfc2307bis --enableldap --enableldapauth --disableforcelegacy --disableldaptls --disablekrb5 --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" --enablemkhomedir --updateall
+
+修改配置文件 sssd.conf
+
+由于没有配置证书，注释这一行，并添加 ldap_tls_reqcert = never
+#ldap_tls_cacertdir = /etc/openldap/cacerts
+ldap_tls_reqcert = never
+
+ldap_default_bind_dn = uid=zhangsan,ou=users,dc=cdp,dc=luqimin,dc=cn
+ldap_default_authtok_type = password
+ldap_default_authtok = 123456
+
+ldap_user_object_class = posixAccount
+ldap_user_name = uid
+ldap_user_uid_number = uidNumber
+ldap_user_gid_number = gidNumber
+ldap_group_name = cn
+ldap_group_object_class = posixGroup
+ldap_group_gid_number = gidNumber
+
+在[nss]下添加
+verride_homedir = /home/%u
+override_shell = /bin/bash
+
+
+
+[root@hadoop03 ~]# systemctl restart sssd
+[root@hadoop03 ~]#
+[root@hadoop03 ~]#
+[root@hadoop03 ~]# id zhangsan
+uid=24356(zhangsan) gid=54844(ops) groups=54844(ops)
+[root@hadoop03 ~]#
+[root@hadoop03 ~]# ssh zhangsan@hadoop03.cdp.luqimin.cn
+The authenticity of host 'hadoop03.cdp.luqimin.cn (192.168.2.13)' can't be established.
+ECDSA key fingerprint is SHA256:nMoYGX1rOxSmPCH5v55j2RNG3MuXLwwsmVTqO7p2enM.
+ECDSA key fingerprint is MD5:de:4b:9c:db:6d:96:9e:dd:d7:54:dd:a8:26:42:2f:37.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'hadoop03.cdp.luqimin.cn,192.168.2.13' (ECDSA) to the list of known hosts.
+zhangsan@hadoop03.cdp.luqimin.cn's password:
+Creating home directory for zhangsan.
+Last failed login: Sat Oct  8 16:55:35 CST 2022 from hadoop01.cdp.luqimin.cn on ssh:notty
+There were 3 failed login attempts since the last successful login.
+[zhangsan@hadoop03 ~]$
+[zhangsan@hadoop03 ~]$
