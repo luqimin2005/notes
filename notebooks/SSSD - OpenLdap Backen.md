@@ -15,7 +15,7 @@ authconfig --enablesssd --enablesssdauth --enablerfc2307bis --disableforcelegacy
            --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" \
            --enablemkhomedir --updateall
 ```
-以上命令会自动修改 sssd.conf system-auth password-auth ldap.conf 等配置文件，并自动重启 sssd oddjobd sshd 等服务
+以上命令会自动修改 sssd.conf system-auth password-auth ldap.conf 等配置文件，并自动重启 sssd oddjobd sshd 等服务  
 3. 修改配置文件 /etc/sssd/sssd.conf
 ```
 # 由于没有配置证书，注释这一行，并添加 ldap_tls_reqcert = never
