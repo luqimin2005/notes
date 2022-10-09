@@ -1,22 +1,29 @@
+## 配置 sssd 集成 openldap 进行 ssh 认证
 
+### 测试环境
+* ldapserver: hadoop03.cdp.luqimin.cn
 
-ldapserver: hadoop03.cdp.luqimin.cn
-
-
+### 配置步骤：
+1. 安装依赖包
+```
 yum install sssd sssd-ldap openldap-clients oddjob-mkhomedir
-
+```
+2. 运行配置命令，启动 sssd 并集成 ldapauth
+```
 authconfig --enablesssd --enablesssdauth --enablerfc2307bis --enableldap --enableldapauth --disableforcelegacy --disableldaptls --disablekrb5 --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" --enablemkhomedir --updateall
-
-修改配置文件 sssd.conf
-
-由于没有配置证书，注释这一行，并添加 ldap_tls_reqcert = never
-#ldap_tls_cacertdir = /etc/openldap/cacerts
+```
+3. 修改配置文件 /etc/sssd/sssd.conf
+```
+# 由于没有配置证书，注释这一行，并添加 ldap_tls_reqcert = never
+# ldap_tls_cacertdir = /etc/openldap/cacerts
 ldap_tls_reqcert = never
 
+# 添加一个 bind_dn（任何可以正常连接 ldap 的用户即可），便于搜索用户和组
 ldap_default_bind_dn = uid=zhangsan,ou=users,dc=cdp,dc=luqimin,dc=cn
 ldap_default_authtok_type = password
 ldap_default_authtok = 123456
 
+# 添加用户和组的搜索属性
 ldap_user_object_class = posixAccount
 ldap_user_name = uid
 ldap_user_uid_number = uidNumber
@@ -28,12 +35,13 @@ ldap_group_gid_number = gidNumber
 在[nss]下添加
 verride_homedir = /home/%u
 override_shell = /bin/bash
-
-
-
-[root@hadoop03 ~]# systemctl restart sssd
-[root@hadoop03 ~]#
-[root@hadoop03 ~]#
+```
+4. 重启服务 sssd 和 oddjobd（用户登录时自动创建 home 目录）
+```
+systemctl restart sssd oddjobd
+```
+5. 验证
+```
 [root@hadoop03 ~]# id zhangsan
 uid=24356(zhangsan) gid=54844(ops) groups=54844(ops)
 [root@hadoop03 ~]#
@@ -47,5 +55,4 @@ zhangsan@hadoop03.cdp.luqimin.cn's password:
 Creating home directory for zhangsan.
 Last failed login: Sat Oct  8 16:55:35 CST 2022 from hadoop01.cdp.luqimin.cn on ssh:notty
 There were 3 failed login attempts since the last successful login.
-[zhangsan@hadoop03 ~]$
-[zhangsan@hadoop03 ~]$
+```
