@@ -37,7 +37,7 @@ ldap_group_name = cn
 ldap_group_object_class = posixGroup
 ldap_group_gid_number = gidNumber
 
-在[nss]下添加
+# 在[nss]下添加
 verride_homedir = /home/%u
 override_shell = /bin/bash
 ```
