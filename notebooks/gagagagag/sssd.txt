@@ -45,3 +45,65 @@ ldap_group_gid_number = gidNumber
 debug_level = 7
 override_homedir = /home/%u
 override_shell = /bin/bash
+
+===
+
+
+yum install sssd sssd-ldap openldap-clients oddjob-mkhomedir
+
+authconfig --enablesssd --enablesssdauth --enablerfc2307bis --enableldap --enableldapauth --disableforcelegacy --disableldaptls --disablekrb5 --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" --enablemkhomedir --updateall
+
+
+[root@hadoop02 ~]# cat /etc/sssd/sssd.conf
+[domain/default]
+
+autofs_provider = ldap
+cache_credentials = True
+ldap_search_base = dc=cdp,dc=luqimin,dc=cn
+id_provider = ldap
+auth_provider = ldap
+chpass_provider = ldap
+ldap_uri = ldap://hadoop03.cdp.luqimin.cn
+ldap_id_use_start_tls = False
+#ldap_tls_cacertdir = /etc/openldap/cacerts
+ldap_schema = rfc2307bis
+ldap_tls_reqcert = never
+
+ldap_default_bind_dn = uid=zhangsan,ou=users,dc=cdp,dc=luqimin,dc=cn
+ldap_default_authtok_type = password
+ldap_default_authtok = 123456
+
+ldap_user_object_class = posixAccount
+ldap_user_name = uid
+ldap_user_uid_number = uidNumber
+ldap_user_gid_number = gidNumber
+ldap_group_name = cn
+ldap_group_object_class = posixGroup
+ldap_group_gid_number = gidNumber
+
+[sssd]
+services = nss, pam, autofs
+
+domains = default
+[nss]
+homedir_substring = /home
+
+[pam]
+
+[sudo]
+
+[autofs]
+
+[ssh]
+
+[pac]
+
+[ifp]
+
+[secrets]
+
+[session_recording]
+
+
+systemctl restart sssd oddjobd 
+
