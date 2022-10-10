@@ -11,7 +11,7 @@ yum install sssd sssd-ldap openldap-clients oddjob-mkhomedir
 2. 运行配置命令，启动 sssd 并集成 ldapauth
 ```
 authconfig --enablesssd --enablesssdauth --enablerfc2307bis --disableforcelegacy \
-           --enableldap --enableldapauth --disableldaptls --disablekrb5 
+           --enableldap --enableldapauth --disableldaptls --disablekrb5 \
            --ldapserver ldap://hadoop03.cdp.luqimin.cn --ldapbasedn "dc=cdp,dc=luqimin,dc=cn" \
            --enablemkhomedir --updateall
 ```
