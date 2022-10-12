@@ -28,6 +28,7 @@
       dns_lookup_kdc = false
       ticket_lifetime = 24h
       renew_lifetime = 7d
+      udp_preference_limit = 1
       forwardable = true
       rdns = false
       default_realm = LUQIMIN.CN
