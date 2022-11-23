@@ -21,7 +21,10 @@ authconfig --enablesssd --enablesssdauth --enablerfc2307bis --disableforcelegacy
 ```
 # 由于没有配置证书，注释这一行，并添加 ldap_tls_reqcert = never
 # ldap_tls_cacertdir = /etc/openldap/cacerts
-ldap_tls_reqcert = never
+# ldap_tls_reqcert = never
+
+# 修改 ldap_schema  
+ldap_schema = rfc2307
 
 # 添加一个 bind_dn（任何可以正常连接 ldap 的用户即可），便于搜索用户和组
 ldap_default_bind_dn = uid=zhangsan,ou=users,dc=cdp,dc=luqimin,dc=cn
