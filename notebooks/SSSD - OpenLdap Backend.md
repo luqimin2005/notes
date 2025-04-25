@@ -6,7 +6,7 @@
 ### 配置步骤：
 1. 安装依赖包
 ```
-yum install sssd sssd-ldap openldap-clients oddjob-mkhomedir
+yum install sssd sssd-ldap nss-pam-ldapd openldap-clients oddjob-mkhomedir
 ```
 2. 运行配置命令，启动 sssd 并集成 ldapauth
 ```
